@@ -1,0 +1,5 @@
+/target
+
+/static/styles.css
+/tailwind/**
+!/tailwind/tailwind.css
