@@ -6,7 +6,7 @@ Companion for streaming movies, TV shows and anime.
 
 Run all the following commands in the root directory of the project
 
-### Download TailwindCSS and DaisyUI
+### Download Tailwind and daisyUI
 
 Run the included `download_tailwind.sh` bash file.
 
@@ -43,3 +43,14 @@ cargo run --release
 ```bash
 cargo fmt
 ```
+
+## Stack
+
+* Frontend
+    * (HTMX)[https://htmx.org/]
+    * (Tailwind)[https://tailwindcss.com/]
+    * (daisyUI)[https://daisyui.com/]
+* Backend
+    * (Rust)[https://rust-lang.org/]
+    * (Axum)[https://github.com/tokio-rs/axum]
+    * (Hypertext)[https://github.com/vidhanio/hypertext]
