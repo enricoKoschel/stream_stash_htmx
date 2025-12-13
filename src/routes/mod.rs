@@ -1,11 +1,3 @@
-use crate::views::{MainPage, SimpleComponent};
-use axum::response::IntoResponse;
-use hypertext::prelude::*;
+mod index_router;
 
-pub async fn index() -> impl IntoResponse {
-    maud! {
-        MainPage {
-            SimpleComponent;
-        }
-    }
-}
+pub use self::index_router::index_router;

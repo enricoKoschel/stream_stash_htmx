@@ -1,11 +1,11 @@
-use axum::{Router, routing::get};
+use crate::routes::index_router;
+use axum::Router;
+use axum_htmx::AutoVaryLayer;
 use std::net::Ipv4Addr;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::filter::LevelFilter;
-
-use crate::routes::index;
 
 mod routes;
 mod views;
@@ -18,10 +18,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     let app = Router::new()
-        .route_service("/", get(index))
+        .fallback_service(index_router())
         .nest_service("/static", ServeDir::new("./static"))
-        // .route("/test", get(test))
-        .layer(TraceLayer::new_for_http());
+        .layer(TraceLayer::new_for_http())
+        .layer(AutoVaryLayer);
 
     let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 8000)).await?;
 

@@ -1,27 +1,35 @@
+use crate::views::layouts::BaseLayout;
+use axum::body::Body;
+use axum::http::Response;
+use axum::response::IntoResponse;
+use axum::response::Redirect;
+use hypertext::Renderable;
 use hypertext::prelude::*;
 
-#[component]
-pub fn main_page<R: Renderable>(children: &R) -> impl Renderable {
-    maud! {
-        !DOCTYPE
-        html {
-            head {
-                script src="static/htmx.min.js" {}
-                link rel="stylesheet" href="static/styles.css";
+pub mod components;
+pub mod layouts;
+pub mod pages;
 
-                title { "Stream Stash" }
-            }
-            body {
+pub fn maybe_document<R: Renderable>(hx_request: bool, children: R) -> Response<Body> {
+    maud! {
+        @if hx_request {
+            (children)
+        } @else {
+            BaseLayout {
                 (children)
             }
         }
     }
+    .into_response()
 }
 
-#[component]
-pub fn simple_component() -> impl Renderable {
-    maud! {
-        p.text-xl { "Press here" }
-        button .btn .btn-primary .btn-xl { "Button" }
+pub fn maybe_redirect<R: Renderable>(hx_request: bool, children: R) -> Response<Body> {
+    if hx_request {
+        maud! {
+            (children)
+        }
+        .into_response()
+    } else {
+        Redirect::to("/").into_response()
     }
 }
