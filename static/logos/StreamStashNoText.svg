@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="76.275993mm"
+   height="76.276001mm"
+   viewBox="0 0 76.275993 76.276001"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   sodipodi:docname="Stream Stash logo no text.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#999999"
+     borderopacity="1"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.0520974"
+     inkscape:cx="397.30163"
+     inkscape:cy="409.18266"
+     inkscape:window-width="2560"
+     inkscape:window-height="1377"
+     inkscape:window-x="2552"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g14"
+       style="display:inline;overflow:visible;color-interpolation-filters:sRGB"
+       transform="matrix(0.67897451,0,0,0.67897451,0,3.2134313e-6)"
+       inkscape:label="Logo">
+      <path
+         d="m 82.78,73.42 a 11.52,11.52 0 0 0 -0.82,-17 11.72,11.72 0 0 0 -15.69,1 l -4.44,4.44 -4.68,4.64 A 27.51,27.51 0 1 1 18.25,27.6 l 4.67,-4.68 A 13.42,13.42 0 0 0 13.43,0 13.43,13.43 0 0 0 0,13.43 v 85.48 a 13.43,13.43 0 0 0 13.43,13.43 H 38.3 a 13.43,13.43 0 0 0 9.5,-3.93 z"
+         fill="#15b788"
+         id="path3" />
+      <path
+         d="m 74,0 a 13.43,13.43 0 0 0 -9.5,3.93 l -35,35 a 11.525875,11.525875 0 0 0 16.34,16.26 l 4.67,-4.68 4.27,-4.26 C 65.36,35.66 82.6,35 93.5,45.26 a 27.53,27.53 0 0 1 0.59,39.48 l -4.67,4.68 a 13.42,13.42 0 0 0 9.49,22.92 13.43,13.43 0 0 0 13.43,-13.43 V 13.43 A 13.43,13.43 0 0 0 98.91,0 Z"
+         fill="#1395ba"
+         id="path4" />
+    </g>
+  </g>
+</svg>

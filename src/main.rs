@@ -3,7 +3,7 @@ use axum::Router;
 use axum_htmx::AutoVaryLayer;
 use std::net::Ipv4Addr;
 use tokio::net::TcpListener;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::filter::LevelFilter;
 
@@ -19,6 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app = Router::new()
         .fallback_service(index_router())
+        .route_service("/favicon.ico", ServeFile::new("./static/favicon.ico"))
         .nest_service("/static", ServeDir::new("./static"))
         .layer(TraceLayer::new_for_http())
         .layer(AutoVaryLayer);
