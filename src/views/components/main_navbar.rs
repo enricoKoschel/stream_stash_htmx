@@ -13,7 +13,7 @@ pub fn main_navbar() -> impl Renderable {
                 img class="w-8 hidden sm:max-md:block" src="static/logos/StreamStashNoText.svg";
             }
             div class="flex justify-center" {
-                input class="input input-bordered w-xl min-w-20" type="text" placeholder="Search";
+                input class="input w-xl min-w-20 outline-0" type="text" placeholder="Search";
             }
             div class="flex justify-end text-end" {
                 button class="btn btn-square btn-ghost" {

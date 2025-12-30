@@ -1,5 +1,5 @@
 mod main_navbar;
-mod simple_component;
+mod media_card;
 
 pub use self::main_navbar::*;
-pub use self::simple_component::*;
+pub use self::media_card::*;
