@@ -1,4 +1,4 @@
-use crate::routes::index_router;
+use crate::routes::{index_router, media_router};
 use axum::Router;
 use axum_htmx::AutoVaryLayer;
 use std::net::Ipv4Addr;
@@ -21,6 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .fallback_service(index_router())
         .route_service("/favicon.ico", ServeFile::new("./static/favicon.ico"))
         .nest_service("/static", ServeDir::new("./static"))
+        .nest("/media", media_router())
         .layer(TraceLayer::new_for_http())
         .layer(AutoVaryLayer);
 

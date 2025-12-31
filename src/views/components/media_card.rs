@@ -1,7 +1,12 @@
 use hypertext::prelude::*;
 
 #[component]
-pub fn media_card<'a>(title: &'a str, year: &'a str, poster_url: &'a str, media_page_url: &'a str) -> impl Renderable {
+pub fn media_card<'a>(
+    title: &'a str,
+    year: &'a str,
+    poster_url: &'a str,
+    media_page_url: &'a str,
+) -> impl Renderable {
     maud! {
         a class="relative w-50 group" href=media_page_url {
             img class="rounded-lg brightness-100 group-hover:brightness-28 transition-[filter]" src=poster_url;
