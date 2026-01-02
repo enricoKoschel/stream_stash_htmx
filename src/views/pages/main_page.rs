@@ -5,6 +5,7 @@ use hypertext::prelude::*;
 pub fn main_page(cards: &[MediaCard]) -> impl Renderable {
     maud! {
         MainLayout {
+            // TODO: Amount of and spacing between the cards (flex?)
             div class="grid grid-cols-9 gap-5 m-2" {
                 @for card in cards {
                     (card)

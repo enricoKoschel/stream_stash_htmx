@@ -21,7 +21,7 @@ pub fn base_layout<R: Renderable>(children: &R) -> impl Renderable {
 
                 title { "Stream Stash" }
             }
-            body {
+            body hx-boost="true" {
                 (children)
             }
         }
