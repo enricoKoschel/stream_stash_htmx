@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(TraceLayer::new_for_http())
         .layer(AutoVaryLayer);
 
-    let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 8000)).await?;
+    let listener = TcpListener::bind((Ipv4Addr::UNSPECIFIED, 8000)).await?;
 
     axum::serve(listener, app).await?;
 

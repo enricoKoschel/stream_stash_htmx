@@ -3,10 +3,9 @@ use hypertext::prelude::*;
 #[component]
 pub fn main_navbar() -> impl Renderable {
     maud! {
-        div class="navbar bg-base-200 shadow-md grid grid-cols-3" {
+        div class="navbar sticky top-0 z-1 bg-base-200 shadow-md grid grid-cols-3" {
             div class="flex" {
-                // TODO: Link to home (full reload?)
-                a class="btn btn-ghost text-xl mr-2" href="#" {
+                a class="btn btn-ghost text-xl mr-2" href="/" {
                     img class="size-8" src="static/heroicons/home-solid-white.svg";
                 }
                 img class="md:w-40 lg:w-3xs xl:w-xs hidden md:block" src="static/logos/StreamStashWithTextWhite.svg";

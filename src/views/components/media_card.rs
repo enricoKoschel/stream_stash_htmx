@@ -8,7 +8,7 @@ pub fn media_card<'a>(
     media_page_url: &'a str,
 ) -> impl Renderable {
     maud! {
-        a class="relative w-50 group" href=media_page_url {
+        a class="relative group" href=media_page_url {
             img class="rounded-lg brightness-100 group-hover:brightness-28 transition-[filter]" src=poster_url;
 
             div class="absolute inset-0 mx-3 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-[opacity]" {

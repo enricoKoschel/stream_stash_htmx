@@ -5,10 +5,19 @@ use hypertext::prelude::*;
 pub fn main_page(cards: &[MediaCard]) -> impl Renderable {
     maud! {
         MainLayout {
-            // TODO: Amount of and spacing between the cards (flex?)
-            div class="grid grid-cols-9 gap-5 m-2" {
-                @for card in cards {
-                    (card)
+            @if !cards.is_empty() {
+                div class="grid gap-4
+                    grid-cols-[repeat(auto-fill,minmax(100px,1fr))]
+                    sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))]
+                    lg:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]
+                    2xl:grid-cols-[repeat(auto-fill,minmax(250px,1fr))]" {
+                    @for card in cards {
+                        (card)
+                    }
+                }
+            } @else {
+                div class="flex justify-center" {
+                    h2 class="text-4xl" { "No media to display" }
                 }
             }
         }
