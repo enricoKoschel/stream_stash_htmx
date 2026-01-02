@@ -1,3 +1,4 @@
+use crate::views::components::MainFooter;
 use crate::views::components::MainNavbar;
 use hypertext::prelude::*;
 
@@ -5,6 +6,9 @@ use hypertext::prelude::*;
 pub fn main_layout<R: Renderable>(children: &R) -> impl Renderable {
     maud! {
         MainNavbar;
-        (children)
+        div {
+            (children)
+        }
+        MainFooter;
     }
 }

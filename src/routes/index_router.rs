@@ -1,6 +1,6 @@
 use crate::views::components::MediaCard;
 use crate::views::maybe_document;
-use crate::views::pages::main_page;
+use crate::views::pages::{about_page, main_page};
 use axum::response::IntoResponse;
 use axum::{Router, routing::get};
 use axum_htmx::HxRequest;
@@ -25,6 +25,12 @@ async fn index(HxRequest(hx_request): HxRequest) -> impl IntoResponse {
     maybe_document(hx_request, main_page(&media))
 }
 
+async fn about(HxRequest(hx_request): HxRequest) -> impl IntoResponse {
+    maybe_document(hx_request, about_page())
+}
+
 pub fn index_router() -> Router {
-    Router::<()>::new().route("/", get(index))
+    Router::<()>::new()
+        .route("/", get(index))
+        .route("/about", get(about))
 }
