@@ -1,3 +1,5 @@
 @import "tailwindcss" source("../src/views");
 
-@plugin "./daisyui.mjs";
+@plugin "./daisyui.mjs" {
+    themes: dark --default;
+}
