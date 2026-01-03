@@ -23,7 +23,7 @@ pub fn maybe_document<R: Renderable>(hx_request: bool, children: R) -> Response<
     .into_response()
 }
 
-pub fn maybe_redirect<R: Renderable>(hx_request: bool, children: R) -> Response<Body> {
+pub fn _maybe_redirect<R: Renderable>(hx_request: bool, children: R) -> Response<Body> {
     if hx_request {
         maud! {
             (children)
