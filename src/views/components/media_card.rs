@@ -17,7 +17,7 @@ pub fn media_card<'a>(
             }
         }
         a class="pointer-fine:hidden bg-gray-700 rounded-lg flex flex-col" href=media_page_url {
-            div class="grow flex flex-col justify-center m-2" {
+            div class="flex-1 flex flex-col justify-center m-2" {
                 h2 class="text-md font-medium text-center mb-3 line-clamp-3 text-ellipsis wrap-anywhere" { (title) }
                 p class="text-sm text-center" { (year) }
             }

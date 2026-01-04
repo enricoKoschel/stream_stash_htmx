@@ -1,10 +1,11 @@
 use crate::views::components::MediaCard;
 use crate::views::maybe_document;
 use crate::views::pages::{about_page, main_page};
-use axum::extract::Path;
+use axum::extract::{Path, Query};
 use axum::response::IntoResponse;
 use axum::{Router, routing::get};
 use axum_htmx::HxRequest;
+use serde::Deserialize;
 use std::iter;
 
 async fn index(HxRequest(hx_request): HxRequest, path: Option<Path<usize>>) -> impl IntoResponse {
@@ -32,9 +33,26 @@ async fn about(HxRequest(hx_request): HxRequest) -> impl IntoResponse {
     maybe_document(hx_request, about_page())
 }
 
+#[derive(Deserialize)]
+struct SearchQuery {
+    q: String,
+    t: String,
+}
+
+async fn search(
+    HxRequest(hx_request): HxRequest,
+    Query(search_query): Query<SearchQuery>,
+) -> impl IntoResponse {
+    maybe_document(
+        hx_request,
+        format!("q:{}, t:{}", search_query.q, search_query.t),
+    )
+}
+
 pub fn index_router() -> Router {
     Router::<()>::new()
         .route("/", get(index))
         .route("/{count}", get(index))
         .route("/about", get(about))
+        .route("/search", get(search))
 }

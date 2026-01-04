@@ -7,8 +7,7 @@ pub fn main_page(cards: &[MediaCard]) -> impl Renderable {
         MainLayout {
             @if !cards.is_empty() {
                 div class="grid gap-4
-                    grid-cols-[repeat(auto-fill,minmax(100px,1fr))]
-                    sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))]
+                    grid-cols-[repeat(auto-fill,minmax(150px,1fr))]
                     lg:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]
                     2xl:grid-cols-[repeat(auto-fill,minmax(250px,1fr))]" {
                     @for card in cards {
