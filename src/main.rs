@@ -1,3 +1,4 @@
+use crate::media_source::tmdb::TmdbService;
 use crate::routes::{index_router, media_router};
 use axum::Router;
 use axum_htmx::AutoVaryLayer;
@@ -7,23 +8,41 @@ use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::filter::LevelFilter;
 
+mod media_source;
 mod routes;
 mod views;
 
+#[derive(Clone)]
+struct AppState {
+    tmdb_service: TmdbService,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if let Err(e) = dotenv::dotenv() {
+        panic!("Error while loading .env file: {e}")
+    }
+
+    let tmdb_read_access_token = std::env::var("TMDB_READ_ACCESS_TOKEN")
+        .expect("Please provide a TMDB_READ_ACCESS_TOKEN environment variable");
+
     // TODO: Get from env
     tracing_subscriber::fmt()
         .with_max_level(LevelFilter::DEBUG)
         .init();
 
+    let app_state = AppState {
+        tmdb_service: TmdbService::new(&tmdb_read_access_token),
+    };
+
     let app = Router::new()
-        .fallback_service(index_router())
+        .merge(index_router())
         .route_service("/favicon.ico", ServeFile::new("./static/favicon.ico"))
         .nest_service("/static", ServeDir::new("./static"))
         .nest("/media", media_router())
         .layer(TraceLayer::new_for_http())
-        .layer(AutoVaryLayer);
+        .layer(AutoVaryLayer)
+        .with_state(app_state);
 
     let listener = TcpListener::bind((Ipv4Addr::UNSPECIFIED, 8000)).await?;
 

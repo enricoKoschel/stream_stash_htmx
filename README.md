@@ -14,6 +14,21 @@ Run the included `download_tailwind.sh` bash file.
 ./download_tailwind.sh
 ```
 
+### Request API access to [The Movie Database](https://www.themoviedb.org)
+
+Click [here](https://developer.themoviedb.org/docs/getting-started) for instructions on how to request access
+
+### Setup environment variables
+
+- Create a `.env` file in the same directory as the `Cargo.toml` file with the following contents:
+
+TODO: Add ip, port, log level, google client id, secret?
+```toml
+TMDB_READ_ACCESS_TOKEN="" # Your TMDB API Read Access Token
+```
+
+- Make sure to use the TMDB API Read Access Token, not the API Key (both can be found [here](https://www.themoviedb.org/settings/api) after your request to access the TMDB API has been granted)
+
 ### Install cargo watch (optional, but recommended)
 
 ```bash

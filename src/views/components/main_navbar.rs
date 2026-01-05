@@ -1,7 +1,8 @@
 use hypertext::prelude::*;
 
 #[component]
-pub fn main_navbar() -> impl Renderable {
+// TODO: Actual search query struct (and optional?)
+pub fn main_navbar<'a>(search_query: (&'a str, &'a str)) -> impl Renderable {
     maud! {
         div class="navbar sticky top-0 z-1 bg-base-200 shadow-md flex" {
             div class="flex-1 flex gap-2" {
@@ -12,10 +13,11 @@ pub fn main_navbar() -> impl Renderable {
                 img class="w-8 hidden sm:max-lg:block" src="static/logos/StreamStashNoText.svg";
             }
             form class="sm:flex-1 flex gap-1 max-sm:flex-col max-sm:w-80 max-sm:min-w-26 max-sm:mx-4 justify-center" hx-get="/search" hx-target="body" hx-push-url="true" {
-                input class="sm:flex-1 input min-h-10 outline-0 sm:min-w-60 max-sm:w-full" name="q" type="text" placeholder="Search";
+                input class="sm:flex-1 input min-h-10 outline-0 sm:min-w-60 max-sm:w-full" name="q" type="text" placeholder="Search" value=(search_query.0);
                 select class="select outline-0 w-full sm:w-26 cursor-pointer" name="t" {
-                    option { "Movies" }
-                    option { "TV Shows" }
+                    // TODO: Do this better
+                    option selected[search_query.1 == "Movies"] { "Movies" }
+                    option selected[search_query.1 == "TV Shows"] { "TV Shows" }
                 }
                 input class="btn btn-primary btn-soft" type="submit" value="Search";
             }

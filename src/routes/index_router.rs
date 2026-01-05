@@ -1,7 +1,8 @@
+use crate::AppState;
 use crate::views::components::MediaCard;
 use crate::views::maybe_document;
-use crate::views::pages::{about_page, main_page};
-use axum::extract::{Path, Query};
+use crate::views::pages::{about_page, main_page, search_page};
+use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::{Router, routing::get};
 use axum_htmx::HxRequest;
@@ -42,15 +43,28 @@ struct SearchQuery {
 async fn search(
     HxRequest(hx_request): HxRequest,
     Query(search_query): Query<SearchQuery>,
+    State(state): State<AppState>,
 ) -> impl IntoResponse {
+    let search_result = match search_query.t.as_str() {
+        "Movies" => state
+            .tmdb_service
+            .search_movies(&search_query.q)
+            .await
+            .unwrap(),
+        "TV Shows" => todo!(),
+        _ => todo!(),
+    };
     maybe_document(
         hx_request,
-        format!("q:{}, t:{}", search_query.q, search_query.t),
+        search_page(
+            (&search_query.q, &search_query.t),
+            &format!("{search_result:?}"),
+        ),
     )
 }
 
-pub fn index_router() -> Router {
-    Router::<()>::new()
+pub fn index_router() -> Router<AppState> {
+    Router::new()
         .route("/", get(index))
         .route("/{count}", get(index))
         .route("/about", get(about))

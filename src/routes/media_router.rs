@@ -1,4 +1,4 @@
-use crate::views::maybe_document;
+use crate::{AppState, views::maybe_document};
 use axum::{Router, extract::Path, response::IntoResponse, routing::get};
 use axum_htmx::HxRequest;
 
@@ -10,6 +10,6 @@ async fn test(
     maybe_document(hx_request, format!("{media_type}:{id}"))
 }
 
-pub fn media_router() -> Router {
-    Router::<()>::new().route("/{media_type}/{id}", get(test))
+pub fn media_router() -> Router<AppState> {
+    Router::new().route("/{media_type}/{id}", get(test))
 }

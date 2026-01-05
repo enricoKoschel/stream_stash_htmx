@@ -4,7 +4,8 @@ use hypertext::prelude::*;
 
 pub fn main_page(cards: &[MediaCard]) -> impl Renderable {
     maud! {
-        MainLayout {
+        // TODO: Do this with optional?
+        MainLayout search_query=("", "Movies") {
             @if !cards.is_empty() {
                 div class="grid gap-4
                     grid-cols-[repeat(auto-fill,minmax(150px,1fr))]
