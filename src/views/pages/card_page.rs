@@ -1,0 +1,28 @@
+use crate::views::layouts::main_layout;
+use maud::{Markup, html};
+
+// TODO: Media card as struct?
+// Todo: Actual search query struct
+pub fn card_page(search_query: (&str, &str), cards: &[Markup]) -> Markup {
+    main_layout(
+        search_query,
+        html! {
+            @if !cards.is_empty() {
+                div class="grid gap-4
+                    grid-cols-[repeat(auto-fill,minmax(150px,1fr))]
+                    lg:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]
+                    2xl:grid-cols-[repeat(auto-fill,minmax(250px,1fr))]"
+                {
+                    @for card in cards {
+                        (card)
+                    }
+                }
+            } @else {
+                div class="flex justify-center" {
+                    // TODO: If search was done (search query filled?) show different text
+                    h2 class="text-4xl" { "No media to display"; }
+                }
+            }
+        },
+    )
+}

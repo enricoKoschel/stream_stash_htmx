@@ -1,16 +1,14 @@
-use hypertext::prelude::*;
+use maud::{DOCTYPE, Markup, html};
 
-#[component]
-pub fn base_layout<R: Renderable>(children: &R) -> impl Renderable {
-    maud! {
-        !DOCTYPE
+pub fn base_layout(children: Markup) -> Markup {
+    html! {
+        (DOCTYPE);
         html {
             head {
                 script src="/static/htmx.min.js" {}
                 link rel="stylesheet" href="/static/styles.css";
 
-                meta name="viewport"
-                    content="width=device-width, height=device-height, minimum-scale=1.0, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
+                meta name="viewport" content="width=device-width, height=device-height, minimum-scale=1.0, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
 
                 link rel="icon" type="image/png" sizes="128x128" href="/static/icons/favicon-128x128.png";
                 link rel="icon" type="image/png" sizes="96x96" href="/static/icons/favicon-96x96.png";
@@ -22,7 +20,7 @@ pub fn base_layout<R: Renderable>(children: &R) -> impl Renderable {
                 title { "Stream Stash" }
             }
             body hx-boost="true" {
-                (children)
+                (children);
             }
         }
     }

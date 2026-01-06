@@ -1,33 +1,36 @@
 use crate::AppState;
-use crate::views::components::MediaCard;
+use crate::media_source::tmdb::TmdbService;
+use crate::views::components::media_card;
 use crate::views::maybe_document;
-use crate::views::pages::{about_page, main_page, search_page};
+use crate::views::pages::{about_page, card_page};
 use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::{Router, routing::get};
 use axum_htmx::HxRequest;
+use maud::Markup;
 use serde::Deserialize;
 use std::iter;
 
 async fn index(HxRequest(hx_request): HxRequest, path: Option<Path<usize>>) -> impl IntoResponse {
     let count = path.map_or(50, |p| p.0);
 
-    let media: Vec<MediaCard> = iter::repeat_with(|| [
-        MediaCard {
-            title: "Harry Potter and the Philosopher's Stone",
-            year: "2001",
-            poster_url: "https://image.tmdb.org/t/p/w600_and_h900_bestv2/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg",
-            media_page_url: "/media/movie/1",
-        },
-        MediaCard {
-            title: "Breaking Bad",
-            year: "2008",
-            poster_url: "https://image.tmdb.org/t/p/w600_and_h900_bestv2/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg",
-            media_page_url: "/media/tv/1",
-        },
+    let media: Vec<Markup> = iter::repeat_with(|| [
+        media_card(
+            "Harry Potter and the Philosopher's Stone",
+            "2001",
+            Some("https://image.tmdb.org/t/p/w600_and_h900_bestv2/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg"),
+            "/media/movie/1",
+        ),
+        media_card(
+            "Breaking Bad",
+            "2008",
+            Some("https://image.tmdb.org/t/p/w600_and_h900_bestv2/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg"),
+            "/media/tv/1",
+        ),
     ]).flatten().take(count).collect();
 
-    maybe_document(hx_request, main_page(&media))
+    // TODO: Do search query with optional?
+    maybe_document(hx_request, card_page(("", "Movies"), &media))
 }
 
 async fn about(HxRequest(hx_request): HxRequest) -> impl IntoResponse {
@@ -45,21 +48,76 @@ async fn search(
     Query(search_query): Query<SearchQuery>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let search_result = match search_query.t.as_str() {
-        "Movies" => state
-            .tmdb_service
-            .search_movies(&search_query.q)
-            .await
-            .unwrap(),
-        "TV Shows" => todo!(),
+    // TODO: Error handling, better matching?
+    let cards: Vec<Markup> = match search_query.t.as_str() {
+        "Movies" => {
+            let search_result = state
+                .tmdb_service
+                .search_movies(&search_query.q)
+                .await
+                .unwrap();
+
+            search_result
+                .results
+                .into_iter()
+                .map(|media| {
+                    let title = media
+                        .title
+                        .as_deref()
+                        .filter(|title| !title.is_empty())
+                        .unwrap_or("????");
+                    let year = &media
+                        .release_date
+                        .as_deref()
+                        .filter(|date| !date.is_empty())
+                        .unwrap_or("????")[0..4];
+                    let poster_url = media
+                        .poster_path
+                        .and_then(|path| TmdbService::get_image_url(&path).ok())
+                        .map(String::from);
+                    let media_page_url = &format!("/media/movie/{}", media.id);
+
+                    media_card(title, year, poster_url.as_deref(), media_page_url)
+                })
+                .collect()
+        }
+        "TV Shows" => {
+            let search_result = state
+                .tmdb_service
+                .search_tv_shows(&search_query.q)
+                .await
+                .unwrap();
+
+            search_result
+                .results
+                .into_iter()
+                .map(|media| {
+                    let name = media
+                        .name
+                        .as_deref()
+                        .filter(|name| !name.is_empty())
+                        .unwrap_or("????");
+                    let year = &media
+                        .first_air_date
+                        .as_deref()
+                        .filter(|date| !date.is_empty())
+                        .unwrap_or("????")[0..4];
+                    let poster_url = media
+                        .poster_path
+                        .and_then(|path| TmdbService::get_image_url(&path).ok())
+                        .map(String::from);
+                    let media_page_url = &format!("/media/tv/{}", media.id);
+
+                    media_card(name, year, poster_url.as_deref(), media_page_url)
+                })
+                .collect()
+        }
         _ => todo!(),
     };
+
     maybe_document(
         hx_request,
-        search_page(
-            (&search_query.q, &search_query.t),
-            &format!("{search_result:?}"),
-        ),
+        card_page((&search_query.q, &search_query.t), &cards),
     )
 }
 

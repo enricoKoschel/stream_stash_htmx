@@ -1,7 +1,9 @@
 use reqwest::{
-    Client, Url,
+    Client,
     header::{self, HeaderMap, HeaderValue},
 };
+use serde::{Deserialize, Serialize};
+use url::{ParseError, Url};
 
 #[derive(Clone)]
 pub struct TmdbService {
@@ -10,12 +12,12 @@ pub struct TmdbService {
 }
 
 #[allow(unused)]
-#[derive(Debug, serde::Deserialize)]
-pub struct Media {
+#[derive(Debug, Deserialize)]
+pub struct Movie {
     pub adult: Option<bool>,
     pub backdrop_path: Option<String>,
     pub genre_ids: Option<Vec<i32>>,
-    pub id: Option<i32>,
+    pub id: i32,
     pub original_language: Option<String>,
     pub original_title: Option<String>,
     pub overview: Option<String>,
@@ -28,15 +30,51 @@ pub struct Media {
     pub vote_count: Option<i32>,
 }
 
-#[derive(Debug, serde::Deserialize)]
-pub struct SearchResult {
+#[allow(unused)]
+#[derive(Debug, Deserialize)]
+pub struct TvShow {
+    pub adult: Option<bool>,
+    pub backdrop_path: Option<String>,
+    pub genre_ids: Option<Vec<i32>>,
+    pub id: i32,
+    pub origin_country: Option<Vec<String>>,
+    pub original_language: Option<String>,
+    pub original_name: Option<String>,
+    pub overview: Option<String>,
+    pub popularity: Option<f32>,
+    pub poster_path: Option<String>,
+    pub first_air_date: Option<String>,
+    pub name: Option<String>,
+    pub vote_average: Option<f32>,
+    pub vote_count: Option<i32>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MovieSearchResult {
     pub page: i32,
     pub total_pages: i32,
     pub total_results: i32,
-    pub results: Vec<Media>,
+    pub results: Vec<Movie>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TvShowSearchResult {
+    pub page: i32,
+    pub total_pages: i32,
+    pub total_results: i32,
+    pub results: Vec<TvShow>,
 }
 
 impl TmdbService {
+    pub fn get_image_url(image_path: &str) -> Result<Url, ParseError> {
+        let base_url = Url::parse("https://image.tmdb.org/t/p/w600_and_h900_bestv2/")
+            .expect("URL not parseable, should not happen");
+
+        let image_path = image_path.strip_prefix('/').unwrap_or(image_path);
+
+        base_url.join(image_path)
+    }
+
     pub fn new(tmdb_read_access_token: &str) -> Self {
         // TODO: Error handling here for all the expects in here?
         let mut auth_header = HeaderValue::from_str(&format!("Bearer {}", tmdb_read_access_token))
@@ -56,8 +94,12 @@ impl TmdbService {
         }
     }
 
-    pub async fn search_movies(&self, search_term: &str) -> Result<SearchResult, anyhow::Error> {
-        #[derive(serde::Serialize)]
+    pub async fn search_movies(
+        &self,
+        search_term: &str,
+    ) -> Result<MovieSearchResult, anyhow::Error> {
+        // TODO: Remove this and use serde-json?
+        #[derive(Serialize)]
         struct QueryParams<'a> {
             query: &'a str,
             include_adult: Option<bool>,
@@ -80,7 +122,38 @@ impl TmdbService {
         let url = self.base_url.join("/3/search/movie")?;
 
         let res = self.client.get(url).query(&query).send().await?;
-        let json = res.json::<SearchResult>().await?;
+        let json = res.json::<MovieSearchResult>().await?;
+
+        Ok(json)
+    }
+
+    pub async fn search_tv_shows(
+        &self,
+        search_term: &str,
+    ) -> Result<TvShowSearchResult, anyhow::Error> {
+        // TODO: Remove this and use serde-json?
+        #[derive(Serialize)]
+        struct QueryParams<'a> {
+            query: &'a str,
+            first_air_date_year: Option<i32>,
+            include_adult: Option<bool>,
+            language: Option<&'a str>,
+            page: Option<i32>,
+            year: Option<&'a str>,
+        }
+
+        let query = QueryParams {
+            query: search_term,
+            first_air_date_year: None,
+            include_adult: None,
+            language: None,
+            page: None,
+            year: None,
+        };
+        let url = self.base_url.join("/3/search/tv")?;
+
+        let res = self.client.get(url).query(&query).send().await?;
+        let json = res.json::<TvShowSearchResult>().await?;
 
         Ok(json)
     }

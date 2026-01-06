@@ -1,34 +1,26 @@
-use crate::views::layouts::BaseLayout;
+use crate::views::layouts::base_layout;
 use axum::body::Body;
 use axum::http::Response;
 use axum::response::IntoResponse;
 use axum::response::Redirect;
-use hypertext::Renderable;
-use hypertext::prelude::*;
+use maud::Markup;
 
 pub mod components;
 pub mod layouts;
 pub mod pages;
 
-pub fn maybe_document<R: Renderable>(hx_request: bool, children: R) -> Response<Body> {
-    maud! {
-        @if hx_request {
-            (children)
-        } @else {
-            BaseLayout {
-                (children)
-            }
-        }
+pub fn maybe_document(hx_request: bool, children: Markup) -> Response<Body> {
+    if hx_request {
+        children
+    } else {
+        base_layout(children)
     }
     .into_response()
 }
 
-pub fn _maybe_redirect<R: Renderable>(hx_request: bool, children: R) -> Response<Body> {
+pub fn _maybe_redirect(hx_request: bool, children: Markup) -> Response<Body> {
     if hx_request {
-        maud! {
-            (children)
-        }
-        .into_response()
+        children.into_response()
     } else {
         Redirect::to("/").into_response()
     }
