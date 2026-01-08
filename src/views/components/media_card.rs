@@ -8,9 +8,6 @@ pub fn media_card(
     media_page_url: &str,
     next_page_url: Option<&str>,
 ) -> Markup {
-    // Sets the poster url to "" if it is None, this causes the backup image to be shown
-    let poster_url = poster_url.unwrap_or_default();
-
     let children = html! {
         a class="relative group not-pointer-fine:hidden" href=(media_page_url) {
             (image_with_fallback("aspect-2/3 rounded-lg brightness-100 group-hover:brightness-28 transition-[filter]", poster_url));

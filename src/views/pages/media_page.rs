@@ -1,13 +1,28 @@
-use crate::{routes::search::SearchQuery, views::layouts::main_layout};
+use crate::views::components::image_with_fallback;
+use crate::views::layouts::main_layout;
 use maud::{Markup, html};
 
-pub fn media_page(search_query: Option<&SearchQuery>, media_type: &str, id: &str) -> Markup {
+// TODO: Media item as struct?
+pub fn media_page(
+    title: &str,
+    overview: &str,
+    release_date: &str,
+    poster_url: Option<&str>,
+    backdrop_url: Option<&str>,
+) -> Markup {
     main_layout(
-        search_query,
+        None,
         html! {
-            (media_type);
-            br;
-            (id);
+            // top-16 because of the navbar
+            // TODO: Fallback image looks bad here
+            (image_with_fallback("aspect-16/9 fixed inset-0 top-16 w-full h-full -z-1 opacity-20 object-cover", backdrop_url));
+
+            div class="flex" {
+                (image_with_fallback("aspect-2/3", poster_url));
+                div class="text-3xl" { (title); }
+                div class="text-3xl" { (overview); }
+                div class="text-3xl" { (release_date); }
+            }
         },
     )
 }

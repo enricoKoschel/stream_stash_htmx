@@ -49,7 +49,6 @@ pub struct TvShow {
     pub vote_count: Option<i32>,
 }
 
-#[allow(unused)]
 #[derive(Debug, Deserialize)]
 pub struct MovieSearchResult {
     pub page: i32,
@@ -58,7 +57,6 @@ pub struct MovieSearchResult {
     pub results: Vec<Movie>,
 }
 
-#[allow(unused)]
 #[derive(Debug, Deserialize)]
 pub struct TvShowSearchResult {
     pub page: i32,
