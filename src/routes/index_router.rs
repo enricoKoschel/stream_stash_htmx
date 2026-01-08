@@ -80,7 +80,6 @@ pub struct SearchQuery {
 }
 
 // TODO: Clean all of the search code up
-// TODO: If last page from tmdb was fetched, don't fetch the next one
 // TODO: Somehow show that all results were loaded
 // TODO: Show total results somewhere
 async fn search(
@@ -163,15 +162,17 @@ async fn search_movies(
             .map(String::from);
         let media_page_url = &format!("/media/movie/{}", media.id);
 
-        mapped.push(match it.peek() {
-            Some(_) => media_card(title, year, poster_url.as_deref(), media_page_url, None),
-            None => media_card(
+        let last_page = search_result.page >= search_result.total_pages;
+        mapped.push(if it.peek().is_some() || last_page {
+            media_card(title, year, poster_url.as_deref(), media_page_url, None)
+        } else {
+            media_card(
                 title,
                 year,
                 poster_url.as_deref(),
                 media_page_url,
                 Some(next_page_url),
-            ),
+            )
         });
     }
 
@@ -209,16 +210,18 @@ async fn search_tv_shows(
             .map(String::from);
         let media_page_url = &format!("/media/tv/{}", media.id);
 
-        mapped.push(match it.peek() {
-            Some(_) => media_card(name, year, poster_url.as_deref(), media_page_url, None),
-            None => media_card(
+        let last_page = search_result.page >= search_result.total_pages;
+        mapped.push(if it.peek().is_some() || last_page {
+            media_card(name, year, poster_url.as_deref(), media_page_url, None)
+        } else {
+            media_card(
                 name,
                 year,
                 poster_url.as_deref(),
                 media_page_url,
                 Some(next_page_url),
-            ),
-        })
+            )
+        });
     }
 
     mapped
