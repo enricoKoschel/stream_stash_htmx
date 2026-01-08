@@ -1,7 +1,7 @@
-mod image_with_fallback;
-mod main_footer;
-mod main_navbar;
-mod media_card;
+pub mod image_with_fallback;
+pub mod main_footer;
+pub mod main_navbar;
+pub mod media_card;
 
 pub use self::image_with_fallback::image_with_fallback;
 pub use self::main_footer::main_footer;

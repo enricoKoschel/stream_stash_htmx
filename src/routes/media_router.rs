@@ -10,8 +10,7 @@ async fn media(
     Path((media_type, id)): Path<(String, String)>,
 ) -> Response<Body> {
     // TODO: Get db entry for media, get tmdb entry for media, then display
-    // TODO: Optional for search query?
-    maybe_document(hx_request, media_page(("", "Movies"), &media_type, &id))
+    maybe_document(hx_request, media_page(None, &media_type, &id))
 }
 
 pub fn media_router() -> Router<AppState> {

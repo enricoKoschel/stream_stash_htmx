@@ -1,9 +1,8 @@
-use crate::views::layouts::main_layout;
+use crate::{routes::index_router::SearchQuery, views::layouts::main_layout};
 use maud::{Markup, html};
 
 // TODO: Media card as struct?
-// Todo: Actual search query struct
-pub fn card_page(search_query: (&str, &str), cards: &[Markup]) -> Markup {
+pub fn card_page(search_query: Option<&SearchQuery>, cards: &[Markup]) -> Markup {
     main_layout(
         search_query,
         html! {
@@ -19,8 +18,11 @@ pub fn card_page(search_query: (&str, &str), cards: &[Markup]) -> Markup {
                 }
             } @else {
                 div class="flex justify-center" {
-                    // TODO: If search was done (search query filled?) show different text
-                    h2 class="text-4xl" { "No media to display"; }
+                    @if search_query.is_some() {
+                        h2 class="text-4xl" { "No search results for this query"; }
+                    } @else {
+                        h2 class="text-4xl" { "No media to display"; }
+                    }
                 }
             }
         },

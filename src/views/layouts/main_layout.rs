@@ -1,9 +1,9 @@
+use crate::routes::index_router::SearchQuery;
 use crate::views::components::main_footer;
 use crate::views::components::main_navbar;
 use maud::{Markup, html};
 
-// TODO: Actual search query struct
-pub fn main_layout(search_query: (&str, &str), children: Markup) -> Markup {
+pub fn main_layout(search_query: Option<&SearchQuery>, children: Markup) -> Markup {
     html! {
         (main_navbar(search_query));
         // Margin on the bottom for the footer

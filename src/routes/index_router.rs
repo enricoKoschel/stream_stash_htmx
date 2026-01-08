@@ -1,4 +1,5 @@
 use crate::AppState;
+use crate::media_source::MediaType;
 use crate::media_source::tmdb::TmdbService;
 use crate::views::components::media_card;
 use crate::views::maybe_document;
@@ -29,8 +30,7 @@ async fn index(HxRequest(hx_request): HxRequest, path: Option<Path<usize>>) -> i
         ),
     ]).flatten().take(count).collect();
 
-    // TODO: Do search query with optional?
-    maybe_document(hx_request, card_page(("", "Movies"), &media))
+    maybe_document(hx_request, card_page(None, &media))
 }
 
 async fn about(HxRequest(hx_request): HxRequest) -> impl IntoResponse {
@@ -38,9 +38,9 @@ async fn about(HxRequest(hx_request): HxRequest) -> impl IntoResponse {
 }
 
 #[derive(Deserialize)]
-struct SearchQuery {
-    q: String,
-    t: String,
+pub struct SearchQuery {
+    pub q: String,
+    pub t: MediaType,
 }
 
 async fn search(
@@ -48,9 +48,11 @@ async fn search(
     Query(search_query): Query<SearchQuery>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    // TODO: Error handling, better matching?
-    let cards: Vec<Markup> = match search_query.t.as_str() {
-        "Movies" => {
+    // TODO: SearchQuery members should be case insensitive
+    // TODO: MediaType variants should be case insensitive
+    // TODO: Error handling!
+    let cards: Vec<Markup> = match search_query.t {
+        MediaType::Movies => {
             let search_result = state
                 .tmdb_service
                 .search_movies(&search_query.q)
@@ -81,7 +83,7 @@ async fn search(
                 })
                 .collect()
         }
-        "TV Shows" => {
+        MediaType::TvShows => {
             let search_result = state
                 .tmdb_service
                 .search_tv_shows(&search_query.q)
@@ -112,13 +114,9 @@ async fn search(
                 })
                 .collect()
         }
-        _ => todo!(),
     };
 
-    maybe_document(
-        hx_request,
-        card_page((&search_query.q, &search_query.t), &cards),
-    )
+    maybe_document(hx_request, card_page(Some(&search_query), &cards))
 }
 
 pub fn index_router() -> Router<AppState> {

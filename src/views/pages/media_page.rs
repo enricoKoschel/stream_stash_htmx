@@ -1,9 +1,7 @@
+use crate::{routes::index_router::SearchQuery, views::layouts::main_layout};
 use maud::{Markup, html};
 
-use crate::views::layouts::main_layout;
-
-// TODO: Actual search query struct
-pub fn media_page(search_query: (&str, &str), media_type: &str, id: &str) -> Markup {
+pub fn media_page(search_query: Option<&SearchQuery>, media_type: &str, id: &str) -> Markup {
     main_layout(
         search_query,
         html! {
