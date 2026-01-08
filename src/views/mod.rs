@@ -18,10 +18,10 @@ pub fn maybe_document(hx_request: bool, children: Markup) -> Response<Body> {
     .into_response()
 }
 
-pub fn _maybe_redirect(hx_request: bool, children: Markup) -> Response<Body> {
+pub fn maybe_redirect(hx_request: bool, redirect_to: &str, children: Markup) -> Response<Body> {
     if hx_request {
         children.into_response()
     } else {
-        Redirect::to("/").into_response()
+        Redirect::to(redirect_to).into_response()
     }
 }

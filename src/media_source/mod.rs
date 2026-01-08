@@ -5,10 +5,18 @@ pub mod tmdb;
 
 pub const MEDIA_TYPES: [MediaType; 2] = [MediaType::Movies, MediaType::TvShows];
 
+// TODO: Should be truly case insensitive
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
 pub enum MediaType {
+    #[serde(alias = "movies", alias = "MOVIES")]
     Movies,
-    #[serde(rename = "TV Shows")]
+    #[serde(
+        rename = "TV Shows",
+        alias = "tv shows",
+        alias = "TV SHOWS",
+        alias = "Tv Shows",
+        alias = "Tv shows"
+    )]
     TvShows,
 }
 

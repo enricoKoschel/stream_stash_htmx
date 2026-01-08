@@ -49,6 +49,7 @@ pub struct TvShow {
     pub vote_count: Option<i32>,
 }
 
+#[allow(unused)]
 #[derive(Debug, Deserialize)]
 pub struct MovieSearchResult {
     pub page: i32,
@@ -57,6 +58,7 @@ pub struct MovieSearchResult {
     pub results: Vec<Movie>,
 }
 
+#[allow(unused)]
 #[derive(Debug, Deserialize)]
 pub struct TvShowSearchResult {
     pub page: i32,
@@ -97,6 +99,7 @@ impl TmdbService {
     pub async fn search_movies(
         &self,
         search_term: &str,
+        page: i32,
     ) -> Result<MovieSearchResult, anyhow::Error> {
         // TODO: Remove this and use serde-json?
         #[derive(Serialize)]
@@ -115,7 +118,7 @@ impl TmdbService {
             include_adult: None,
             language: None,
             primary_release_year: None,
-            page: None,
+            page: Some(page),
             region: None,
             year: None,
         };
@@ -130,6 +133,7 @@ impl TmdbService {
     pub async fn search_tv_shows(
         &self,
         search_term: &str,
+        page: i32,
     ) -> Result<TvShowSearchResult, anyhow::Error> {
         // TODO: Remove this and use serde-json?
         #[derive(Serialize)]
@@ -147,7 +151,7 @@ impl TmdbService {
             first_air_date_year: None,
             include_adult: None,
             language: None,
-            page: None,
+            page: Some(page),
             year: None,
         };
         let url = self.base_url.join("/3/search/tv")?;

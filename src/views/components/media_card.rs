@@ -6,11 +6,12 @@ pub fn media_card(
     year: &str,
     poster_url: Option<&str>,
     media_page_url: &str,
+    next_page_url: Option<&str>,
 ) -> Markup {
     // Sets the poster url to "" if it is None, this causes the backup image to be shown
     let poster_url = poster_url.unwrap_or_default();
 
-    html! {
+    let children = html! {
         a class="relative group not-pointer-fine:hidden" href=(media_page_url) {
             (image_with_fallback("aspect-2/3 rounded-lg brightness-100 group-hover:brightness-28 transition-[filter]", poster_url));
 
@@ -26,6 +27,18 @@ pub fn media_card(
             }
 
             (image_with_fallback("aspect-2/3 rounded-b-lg", poster_url));
+        }
+    };
+
+    html! {
+        @if let Some(next_page_url) = next_page_url {
+            div hx-get=(next_page_url) hx-trigger="revealed" hx-swap="afterend" {
+                (children)
+            }
+        } @else {
+            div {
+                (children)
+            }
         }
     }
 }
