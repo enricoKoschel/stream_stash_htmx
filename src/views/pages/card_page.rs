@@ -1,4 +1,4 @@
-use crate::{routes::index_router::SearchQuery, views::layouts::main_layout};
+use crate::{routes::search::SearchQuery, views::layouts::main_layout};
 use maud::{Markup, html};
 
 // TODO: Media card as struct?

@@ -1,4 +1,4 @@
-use crate::routes::index_router::SearchQuery;
+use crate::routes::search::SearchQuery;
 use crate::views::components::main_footer;
 use crate::views::components::main_navbar;
 use maud::{Markup, html};
