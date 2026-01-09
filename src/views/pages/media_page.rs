@@ -15,10 +15,10 @@ pub fn media_page(
         html! {
             // top-16 because of the navbar
             // TODO: Fallback image looks bad here
-            (image_with_fallback("aspect-16/9 fixed inset-0 top-16 w-full h-full -z-1 opacity-20 object-cover", backdrop_url));
+            (image_with_fallback("fixed inset-0 top-16 w-full h-full -z-1 opacity-20 object-cover", "aspect-16/9", backdrop_url));
 
             div class="flex" {
-                (image_with_fallback("aspect-2/3", poster_url));
+                (image_with_fallback("", "aspect-2/3", poster_url));
                 div class="text-3xl" { (title); }
                 div class="text-3xl" { (overview); }
                 div class="text-3xl" { (release_date); }

@@ -10,7 +10,7 @@ pub fn media_card(
 ) -> Markup {
     let children = html! {
         a class="relative group not-pointer-fine:hidden" href=(media_page_url) {
-            (image_with_fallback("aspect-2/3 rounded-lg brightness-100 group-hover:brightness-28 transition-[filter]", poster_url));
+            (image_with_fallback("rounded-lg brightness-100 group-hover:brightness-28 transition-[filter]", "aspect-2/3", poster_url));
 
             div class="absolute inset-0 m-4 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-[opacity]" {
                 h2 class="text-lg font-medium text-center mb-3 line-clamp-5 text-ellipsis wrap-anywhere" { (title); }
@@ -23,7 +23,7 @@ pub fn media_card(
                 p class="text-sm text-center" { (year); }
             }
 
-            (image_with_fallback("aspect-2/3 rounded-b-lg", poster_url));
+            (image_with_fallback("rounded-b-lg", "aspect-2/3", poster_url));
         }
     };
 
