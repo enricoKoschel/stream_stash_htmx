@@ -1,6 +1,7 @@
 use serde::Deserialize;
 use std::fmt::Display;
 
+pub mod search;
 pub mod tmdb;
 
 pub const MEDIA_TYPES: [MediaType; 2] = [MediaType::Movies, MediaType::TvShows];
