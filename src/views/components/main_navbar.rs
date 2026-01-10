@@ -1,5 +1,5 @@
-use crate::media_source::MEDIA_TYPES;
-use crate::media_source::search::SearchQuery;
+use crate::data_source::MEDIA_TYPES;
+use crate::data_source::search::SearchQuery;
 use maud::{Markup, html};
 
 pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {

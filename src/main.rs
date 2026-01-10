@@ -1,4 +1,4 @@
-use crate::media_source::tmdb::TmdbService;
+use crate::data_source::tmdb::TmdbService;
 use crate::routes::{index_router, media_router};
 use axum::Router;
 use axum_htmx::AutoVaryLayer;
@@ -8,7 +8,7 @@ use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::filter::LevelFilter;
 
-mod media_source;
+mod data_source;
 mod routes;
 mod views;
 

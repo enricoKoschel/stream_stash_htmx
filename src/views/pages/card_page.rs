@@ -1,4 +1,4 @@
-use crate::media_source::search::SearchQuery;
+use crate::data_source::search::SearchQuery;
 use crate::views::layouts::main_layout;
 use maud::{Markup, html};
 

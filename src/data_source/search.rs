@@ -1,5 +1,5 @@
-use crate::media_source::MediaType;
-use crate::media_source::tmdb::TmdbService;
+use crate::data_source::MediaType;
+use crate::data_source::tmdb::TmdbService;
 use crate::views::components::media_card;
 use maud::Markup;
 use serde::Deserialize;

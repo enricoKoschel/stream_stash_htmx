@@ -1,5 +1,5 @@
 use crate::AppState;
-use crate::media_source::search::{SearchQuery, build_search_url, fetch_search_results};
+use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
 use crate::views::components::{media_card, media_cards};
 use crate::views::pages::{about_page, card_page};
 use crate::views::{maybe_document, maybe_redirect};
