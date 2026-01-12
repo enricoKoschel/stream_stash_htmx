@@ -1,7 +1,7 @@
 use crate::AppState;
 use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
-use crate::views::components::{media_card, media_cards};
-use crate::views::pages::{about_page, card_page};
+use crate::views::components::{card_collection, media_card};
+use crate::views::pages::{about_page, main_page, search_page};
 use crate::views::{maybe_document, maybe_redirect};
 use axum::extract::{Path, Query, State};
 use axum::http::{StatusCode, Uri};
@@ -14,15 +14,13 @@ use std::iter;
 async fn index(HxRequest(hx_request): HxRequest, path: Option<Path<usize>>) -> impl IntoResponse {
     let count = path.map_or(50, |p| p.0);
     let media = generate_sample_media(count);
-    maybe_document(hx_request, card_page(None, &media))
+    maybe_document(hx_request, main_page(&media))
 }
 
 async fn about(HxRequest(hx_request): HxRequest) -> impl IntoResponse {
     maybe_document(hx_request, about_page())
 }
 
-// TODO: Show total results somewhere
-// TODO: Somehow show that last page was loaded
 async fn search(
     HxRequest(hx_request): HxRequest,
     Query(query): Query<SearchQuery>,
@@ -50,11 +48,15 @@ async fn handle_paginated_search(
 ) -> Response {
     // TODO: Redirect before doing all of this unnecessary work?
     let next_page_url = build_search_url(uri_str, &query.q, query.t, Some(page + 1));
-    let cards =
+    let result =
         fetch_search_results(&state.tmdb_service, &query.q, query.t, page, &next_page_url).await;
 
     let url_no_page = build_search_url(uri_str, &query.q, query.t, None);
-    maybe_redirect(hx_request, &url_no_page, media_cards(&cards))
+    maybe_redirect(
+        hx_request,
+        &url_no_page,
+        card_collection(&result.cards, false, true),
+    )
 }
 
 async fn handle_initial_search(
@@ -64,9 +66,17 @@ async fn handle_initial_search(
     uri_str: &str,
 ) -> Response {
     let next_page_url = build_search_url(uri_str, &query.q, query.t, Some(2));
-    let cards =
+    let result =
         fetch_search_results(&state.tmdb_service, &query.q, query.t, 1, &next_page_url).await;
-    maybe_document(hx_request, card_page(Some(query), &cards))
+    maybe_document(
+        hx_request,
+        search_page(
+            query,
+            result.shown_results,
+            result.total_results,
+            &result.cards,
+        ),
+    )
 }
 
 fn generate_sample_media(count: usize) -> Vec<Markup> {

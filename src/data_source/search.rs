@@ -51,11 +51,17 @@ pub async fn fetch_search_results(
     media_type: MediaType,
     page: i32,
     next_page_url: &str,
-) -> Vec<Markup> {
+) -> SearchResult {
     match media_type {
         MediaType::Movies => search_movies(tmdb_service, search_term, page, next_page_url).await,
         MediaType::TvShows => search_tv_shows(tmdb_service, search_term, page, next_page_url).await,
     }
+}
+
+pub struct SearchResult {
+    pub cards: Vec<Markup>,
+    pub shown_results: i32,
+    pub total_results: i32,
 }
 
 async fn search_movies(
@@ -63,12 +69,12 @@ async fn search_movies(
     search_term: &str,
     page: i32,
     next_page_url: &str,
-) -> Vec<Markup> {
+) -> SearchResult {
     // TODO: Error handling!
     let result = tmdb_service.search_movies(search_term, page).await.unwrap();
     let is_last_page = result.page >= result.total_pages;
 
-    map_to_media_cards(
+    let cards = map_to_media_cards(
         &result.results,
         |m| m.title.as_deref(),
         |m| m.release_date.as_deref(),
@@ -76,7 +82,14 @@ async fn search_movies(
         |m| m.poster_path.clone(),
         is_last_page,
         next_page_url,
-    )
+    );
+
+    // TODO: Actual shown results
+    SearchResult {
+        cards,
+        shown_results: 0,
+        total_results: result.total_results,
+    }
 }
 
 async fn search_tv_shows(
@@ -84,7 +97,7 @@ async fn search_tv_shows(
     search_term: &str,
     page: i32,
     next_page_url: &str,
-) -> Vec<Markup> {
+) -> SearchResult {
     // TODO: Error handling!
     let result = tmdb_service
         .search_tv_shows(search_term, page)
@@ -92,7 +105,7 @@ async fn search_tv_shows(
         .unwrap();
     let is_last_page = result.page >= result.total_pages;
 
-    map_to_media_cards(
+    let cards = map_to_media_cards(
         &result.results,
         |m| m.name.as_deref(),
         |m| m.first_air_date.as_deref(),
@@ -100,7 +113,14 @@ async fn search_tv_shows(
         |m| m.poster_path.clone(),
         is_last_page,
         next_page_url,
-    )
+    );
+
+    // TODO: Actual shown results
+    SearchResult {
+        cards,
+        shown_results: 0,
+        total_results: result.total_results,
+    }
 }
 
 fn map_to_media_cards<T>(

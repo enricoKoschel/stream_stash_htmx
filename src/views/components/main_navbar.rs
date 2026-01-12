@@ -4,7 +4,7 @@ use maud::{Markup, html};
 
 pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
     html! {
-        div class="navbar sticky top-0 z-1 bg-base-200 shadow-md flex" {
+        div class="navbar fixed top-0 z-1 bg-base-200 shadow-md flex" {
             div class="flex-1 flex gap-2" {
                 a class="btn btn-square btn-ghost text-xl" href="/" {
                     img class="size-8" src="/static/heroicons/home-solid-white.svg";

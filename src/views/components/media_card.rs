@@ -29,7 +29,7 @@ pub fn media_card(
 
     html! {
         @if let Some(next_page_url) = next_page_url {
-            div hx-get=(next_page_url) hx-trigger="revealed" hx-swap="afterend" {
+            div hx-get=(next_page_url) hx-trigger="revealed" hx-swap="afterend" hx-indicator="#search-loading-indicator" {
                 (children)
             }
         } @else {
