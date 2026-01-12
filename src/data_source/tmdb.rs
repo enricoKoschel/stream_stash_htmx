@@ -5,6 +5,8 @@ use reqwest::{
 use serde::{Deserialize, Serialize};
 use url::{ParseError, Url};
 
+pub const ITEMS_PER_PAGE: i32 = 20;
+
 #[derive(Clone)]
 pub struct TmdbService {
     client: Client,

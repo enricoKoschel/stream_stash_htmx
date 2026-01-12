@@ -12,7 +12,7 @@ pub fn search_layout(
 ) -> Markup {
     html! {
         (main_navbar(Some(search_query)));
-        (search_results_count_bar(shown_results, total_results));
+        (search_results_count_bar(shown_results, total_results, None));
         // Padding for the navbar and footer
         div class="px-4 pt-51 sm:pt-31 pb-18" {
             (children);

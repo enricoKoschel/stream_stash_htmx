@@ -1,5 +1,5 @@
 use crate::data_source::MediaType;
-use crate::data_source::tmdb::TmdbService;
+use crate::data_source::tmdb::{ITEMS_PER_PAGE, TmdbService};
 use crate::views::components::media_card;
 use maud::Markup;
 use serde::Deserialize;
@@ -84,10 +84,10 @@ async fn search_movies(
         next_page_url,
     );
 
-    // TODO: Actual shown results
+    let shown_results = (result.page - 1) * ITEMS_PER_PAGE + result.results.len() as i32;
     SearchResult {
         cards,
-        shown_results: 0,
+        shown_results,
         total_results: result.total_results,
     }
 }
@@ -115,10 +115,10 @@ async fn search_tv_shows(
         next_page_url,
     );
 
-    // TODO: Actual shown results
+    let shown_results = (result.page - 1) * ITEMS_PER_PAGE + result.results.len() as i32;
     SearchResult {
         cards,
-        shown_results: 0,
+        shown_results,
         total_results: result.total_results,
     }
 }

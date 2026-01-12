@@ -1,6 +1,6 @@
 use crate::AppState;
 use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
-use crate::views::components::{card_collection, media_card};
+use crate::views::components::{card_collection, media_card, search_results_count_bar};
 use crate::views::pages::{about_page, main_page, search_page};
 use crate::views::{maybe_document, maybe_redirect};
 use axum::extract::{Path, Query, State};
@@ -52,10 +52,15 @@ async fn handle_paginated_search(
         fetch_search_results(&state.tmdb_service, &query.q, query.t, page, &next_page_url).await;
 
     let url_no_page = build_search_url(uri_str, &query.q, query.t, None);
+    let card_collection = card_collection(&result.cards, false, true);
     maybe_redirect(
         hx_request,
         &url_no_page,
-        card_collection(&result.cards, false, true),
+        search_results_count_bar(
+            result.shown_results,
+            result.total_results,
+            Some(card_collection),
+        ),
     )
 }
 
