@@ -1,5 +1,5 @@
 use crate::data_source::MediaType;
-use crate::data_source::tmdb::{ITEMS_PER_PAGE, TmdbService};
+use crate::data_source::tmdb::{ITEMS_PER_PAGE, ImageType, TmdbService};
 use crate::views::components::media_card;
 use maud::Markup;
 use serde::Deserialize;
@@ -75,11 +75,12 @@ async fn search_movies(
     let is_last_page = result.page >= result.total_pages;
 
     let cards = map_to_media_cards(
+        tmdb_service,
         &result.results,
         |m| m.title.as_deref(),
         |m| m.release_date.as_deref(),
-        |m| format!("/media/movie/{}", m.id),
-        |m| m.poster_path.clone(),
+        |m| format!("/media/{}/{}", MediaType::Movies, m.id),
+        |m| m.poster_path.as_deref(),
         is_last_page,
         next_page_url,
     );
@@ -106,11 +107,12 @@ async fn search_tv_shows(
     let is_last_page = result.page >= result.total_pages;
 
     let cards = map_to_media_cards(
+        tmdb_service,
         &result.results,
         |m| m.name.as_deref(),
         |m| m.first_air_date.as_deref(),
-        |m| format!("/media/tv/{}", m.id),
-        |m| m.poster_path.clone(),
+        |m| format!("/media/{}/{}", MediaType::TvShows, m.id),
+        |m| m.poster_path.as_deref(),
         is_last_page,
         next_page_url,
     );
@@ -123,12 +125,14 @@ async fn search_tv_shows(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn map_to_media_cards<T>(
+    tmdb_service: &TmdbService,
     items: &[T],
     get_title: impl Fn(&T) -> Option<&str>,
     get_date: impl Fn(&T) -> Option<&str>,
     get_media_page_url: impl Fn(&T) -> String,
-    get_poster_path: impl Fn(&T) -> Option<String>,
+    get_poster_path: impl Fn(&T) -> Option<&str>,
     is_last_page: bool,
     next_page_url: &str,
 ) -> Vec<Markup> {
@@ -144,7 +148,7 @@ fn map_to_media_cards<T>(
             .map(|d| &d[0..4])
             .unwrap_or("????");
         let poster_url = get_poster_path(item)
-            .and_then(|path| TmdbService::get_image_url(&path).ok())
+            .and_then(|path| tmdb_service.get_image_url(path, ImageType::Poster).ok())
             .map(String::from);
         let media_page_url = get_media_page_url(item);
 

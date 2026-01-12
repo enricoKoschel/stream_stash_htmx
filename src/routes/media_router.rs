@@ -1,26 +1,72 @@
+use crate::data_source::MediaType;
+use crate::data_source::tmdb::ImageType;
 use crate::views::pages::media_page;
 use crate::{AppState, views::maybe_document};
-use axum::body::Body;
-use axum::http::Response;
+use axum::extract::State;
+use axum::response::IntoResponse;
 use axum::{Router, extract::Path, routing::get};
 use axum_htmx::HxRequest;
 
 async fn media(
     HxRequest(hx_request): HxRequest,
-    Path((media_type, id)): Path<(String, String)>,
-) -> Response<Body> {
-    // TODO: Get db entry for media, get tmdb entry for media, then display
-    let title = "Test title";
-    let overview = "Test overview: oisdfhjoisehrfoienvosnhoeruhseohodghbodrshtgosnghoerhtowh4";
-    let release_date = "2026-01-08";
-    let poster_url =
-        Some("https://image.tmdb.org/t/p/w600_and_h900_bestv2//wuMc08IPKEatf9rnMNXvIDxqP4W.jpg");
-    let backdrop_url =
-        Some("https://image.tmdb.org/t/p/w1920_and_h1080_bestv2//hziiv14OpD73u9gAak4XDDfBKa2.jpg");
+    State(state): State<AppState>,
+    Path((media_type, id)): Path<(MediaType, i32)>,
+) -> impl IntoResponse {
+    // TODO: Get db entry for media
+    let (title, overview, release_date, poster_path, backdrop_path) = match media_type {
+        MediaType::Movies => {
+            // TODO: Error handling!
+            let details = state.tmdb_service.movie_details(id).await.unwrap();
+            (
+                details.title,
+                details.overview,
+                details.release_date,
+                details.poster_path,
+                details.backdrop_path,
+            )
+        }
+        MediaType::TvShows => {
+            // TODO: Error handling!
+            let details = state.tmdb_service.tv_show_details(id).await.unwrap();
+            (
+                details.name,
+                details.overview,
+                details.first_air_date,
+                details.poster_path,
+                details.backdrop_path,
+            )
+        }
+    };
+
+    let title = title.as_deref().unwrap_or("????");
+    let overview = overview.as_deref().unwrap_or_default();
+    let release_date = release_date.as_deref().unwrap_or("????-??-??");
+    let poster_url = poster_path
+        .and_then(|path| {
+            state
+                .tmdb_service
+                .get_image_url(&path, ImageType::Poster)
+                .ok()
+        })
+        .map(String::from);
+    let backdrop_url = backdrop_path
+        .and_then(|path| {
+            state
+                .tmdb_service
+                .get_image_url(&path, ImageType::Backdrop)
+                .ok()
+        })
+        .map(String::from);
 
     maybe_document(
         hx_request,
-        media_page(title, overview, release_date, poster_url, backdrop_url),
+        media_page(
+            title,
+            overview,
+            release_date,
+            poster_url.as_deref(),
+            backdrop_url.as_deref(),
+        ),
     )
 }
 

@@ -10,45 +10,20 @@ pub const ITEMS_PER_PAGE: i32 = 20;
 #[derive(Clone)]
 pub struct TmdbService {
     client: Client,
-    base_url: Url,
+    api_base_url: Url,
+    poster_base_url: Url,
+    backdrop_base_url: Url,
 }
 
-#[allow(unused)]
+// TODO: Other fields?
 #[derive(Debug, Deserialize)]
 pub struct Movie {
-    pub adult: Option<bool>,
     pub backdrop_path: Option<String>,
-    pub genre_ids: Option<Vec<i32>>,
     pub id: i32,
-    pub original_language: Option<String>,
-    pub original_title: Option<String>,
     pub overview: Option<String>,
-    pub popularity: Option<f32>,
     pub poster_path: Option<String>,
     pub release_date: Option<String>,
     pub title: Option<String>,
-    pub video: Option<bool>,
-    pub vote_average: Option<f32>,
-    pub vote_count: Option<i32>,
-}
-
-#[allow(unused)]
-#[derive(Debug, Deserialize)]
-pub struct TvShow {
-    pub adult: Option<bool>,
-    pub backdrop_path: Option<String>,
-    pub genre_ids: Option<Vec<i32>>,
-    pub id: i32,
-    pub origin_country: Option<Vec<String>>,
-    pub original_language: Option<String>,
-    pub original_name: Option<String>,
-    pub overview: Option<String>,
-    pub popularity: Option<f32>,
-    pub poster_path: Option<String>,
-    pub first_air_date: Option<String>,
-    pub name: Option<String>,
-    pub vote_average: Option<f32>,
-    pub vote_count: Option<i32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -59,6 +34,17 @@ pub struct MovieSearchResult {
     pub results: Vec<Movie>,
 }
 
+// TODO: Other fields?
+#[derive(Debug, Deserialize)]
+pub struct TvShow {
+    pub backdrop_path: Option<String>,
+    pub first_air_date: Option<String>,
+    pub id: i32,
+    pub name: Option<String>,
+    pub overview: Option<String>,
+    pub poster_path: Option<String>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct TvShowSearchResult {
     pub page: i32,
@@ -67,14 +53,24 @@ pub struct TvShowSearchResult {
     pub results: Vec<TvShow>,
 }
 
-impl TmdbService {
-    pub fn get_image_url(image_path: &str) -> Result<Url, ParseError> {
-        let base_url = Url::parse("https://image.tmdb.org/t/p/w600_and_h900_bestv2/")
-            .expect("URL not parseable, should not happen");
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ImageType {
+    Poster,
+    Backdrop,
+}
 
+impl TmdbService {
+    pub fn get_image_url(
+        &self,
+        image_path: &str,
+        image_type: ImageType,
+    ) -> Result<Url, ParseError> {
         let image_path = image_path.strip_prefix('/').unwrap_or(image_path);
 
-        base_url.join(image_path)
+        match image_type {
+            ImageType::Poster => self.poster_base_url.join(image_path),
+            ImageType::Backdrop => self.backdrop_base_url.join(image_path),
+        }
     }
 
     pub fn new(tmdb_read_access_token: &str) -> Self {
@@ -91,7 +87,11 @@ impl TmdbService {
                 .default_headers(headers)
                 .build()
                 .expect("Reqwest client could not be created for TmdbService"),
-            base_url: Url::parse("https://api.themoviedb.org/")
+            api_base_url: Url::parse("https://api.themoviedb.org/")
+                .expect("URL not parseable, should not happen"),
+            poster_base_url: Url::parse("https://image.tmdb.org/t/p/w600_and_h900_bestv2/")
+                .expect("URL not parseable, should not happen"),
+            backdrop_base_url: Url::parse("https://image.tmdb.org/t/p/w1920_and_h1080_bestv2/")
                 .expect("URL not parseable, should not happen"),
         }
     }
@@ -122,7 +122,7 @@ impl TmdbService {
             region: None,
             year: None,
         };
-        let url = self.base_url.join("/3/search/movie")?;
+        let url = self.api_base_url.join("/3/search/movie")?;
 
         let res = self.client.get(url).query(&query).send().await?;
         let json = res.json::<MovieSearchResult>().await?;
@@ -154,10 +154,28 @@ impl TmdbService {
             page: Some(page),
             year: None,
         };
-        let url = self.base_url.join("/3/search/tv")?;
+        let url = self.api_base_url.join("/3/search/tv")?;
 
         let res = self.client.get(url).query(&query).send().await?;
         let json = res.json::<TvShowSearchResult>().await?;
+
+        Ok(json)
+    }
+
+    pub async fn movie_details(&self, movie_id: i32) -> Result<Movie, anyhow::Error> {
+        let url = self.api_base_url.join(&format!("/3/movie/{movie_id}"))?;
+
+        let res = self.client.get(url).send().await?;
+        let json = res.json::<Movie>().await?;
+
+        Ok(json)
+    }
+
+    pub async fn tv_show_details(&self, tv_show_id: i32) -> Result<TvShow, anyhow::Error> {
+        let url = self.api_base_url.join(&format!("/3/tv/{tv_show_id}"))?;
+
+        let res = self.client.get(url).send().await?;
+        let json = res.json::<TvShow>().await?;
 
         Ok(json)
     }
