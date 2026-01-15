@@ -1,5 +1,6 @@
 use crate::data_source::MEDIA_TYPES;
 use crate::data_source::search::SearchQuery;
+use crate::views::icons::{bars_3_solid, home_solid};
 use maud::{Markup, html};
 
 pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
@@ -7,7 +8,7 @@ pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
         div class="navbar fixed top-0 z-1 bg-base-200 shadow-md flex" {
             div class="flex-1 flex gap-2" {
                 a class="btn btn-square btn-ghost text-xl" href="/" {
-                    img class="size-8" src="/static/heroicons/home-solid-white.svg";
+                    (home_solid("size-8"));
                 }
                 img class="hidden lg:block w-[min(20vw,24rem)]" src="/static/logos/StreamStashWithTextWhite.svg";
                 img class="w-8 hidden sm:max-lg:block" src="/static/logos/StreamStashNoText.svg";
@@ -23,7 +24,7 @@ pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
             }
             div class="flex-1 flex justify-end" {
                 button class="btn btn-square btn-ghost" {
-                    img class="size-8" src="/static/heroicons/bars-4-solid-white.svg";
+                    (bars_3_solid("size-8"));
                 }
             }
         }
