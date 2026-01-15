@@ -3,6 +3,7 @@ use axum::response::{IntoResponse, Redirect, Response};
 use maud::Markup;
 
 pub mod components;
+pub mod icons;
 pub mod layouts;
 pub mod pages;
 
