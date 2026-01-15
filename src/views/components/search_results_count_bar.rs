@@ -13,8 +13,8 @@ pub fn search_results_count_bar(
             (oob_children);
         },
         None => html! {
-            // top-16/top-36 because of the navbar
-            div class="fixed top-36 sm:top-16 inset-x-0 w-full py-2 z-1 bg-base-200 shadow-md flex justify-center" {
+            // top-* because of the navbar
+            div class="fixed top-33.5 sm:top-16 inset-x-0 w-full py-2 z-1 bg-base-200 shadow-md flex justify-center" {
                 div class="relative" {
                     p id="search-results-count" class="text-lg" {
                         "Results shown: " (shown_results) " of " (total_results);

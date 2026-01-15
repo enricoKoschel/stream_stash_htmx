@@ -14,7 +14,7 @@ pub fn media_page(
         // top-16 because of the navbar
         (image_with_fallback("fixed inset-0 top-34 sm:top-16 w-full h-full -z-1 opacity-20 object-cover", "aspect-16/9", backdrop_url));
 
-        div class="flex flex-col md:flex-row justify-center pt-8 gap-6 md:gap-10 lg:gap-12" {
+        div class="flex flex-col md:flex-row justify-center pt-0 sm:pt-8 gap-6 md:gap-10 lg:gap-12" {
             div class="flex-shrink-0 mx-auto md:mx-0" {
                 (image_with_fallback("w-48 sm:w-56 md:w-64 lg:w-72 rounded-lg shadow-2xl ring-1 ring-white/10", "aspect-2/3", poster_url));
             }
