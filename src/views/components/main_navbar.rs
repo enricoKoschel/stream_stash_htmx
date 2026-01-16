@@ -1,38 +1,74 @@
 use crate::data_source::MEDIA_TYPES;
 use crate::data_source::search::SearchQuery;
-use crate::views::icons::{bars_3_solid, chevron_double_up_solid, home_solid};
+use crate::views::icons::{bars_3_solid, home_solid, magnifying_glass_solid, x_mark_solid};
 use maud::{Markup, html};
 
 pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
     html! {
-        // Mini navbar - fixed behind main navbar on mobile, hidden on desktop
-        // z-0 so it sits behind the main navbar (z-1) and is revealed when main scrolls away
-        div class="sm:hidden fixed top-0 inset-x-0 z-0 bg-base-200 shadow-md flex justify-between items-center px-2 py-1" {
-            a class="btn btn-square btn-ghost btn-sm" href="/" {
-                (home_solid("size-6"));
+        // Mobile navbar
+        div class="sm:hidden fixed top-0 w-full z-1 bg-base-200 shadow-md flex justify-between items-center px-2 py-1" {
+            div class="flex-1" {
+                a class="btn btn-square btn-ghost btn-sm" href="/" {
+                    (home_solid("size-6"));
+                }
             }
-            img class="w-6" src="/static/logos/StreamStashNoText.svg";
-            button class="btn btn-square btn-ghost btn-sm" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" {
-                (chevron_double_up_solid("size-6"));
+            div class="flex-1 flex justify-center" {
+                img class="w-6" src="/static/logos/StreamStashNoText.svg";
+            }
+            div class="flex-1 flex justify-end gap-1" {
+                button class="btn btn-square btn-ghost btn-sm" onclick="document.getElementById('mobile-search-modal').showModal()" {
+                    (magnifying_glass_solid("size-6"));
+                }
+                button class="btn btn-square btn-ghost btn-sm" {
+                    (bars_3_solid("size-6"));
+                }
             }
         }
-        // Main navbar - scrolls on mobile, fixed on desktop
-        div class="flex navbar sm:fixed top-0 z-1 bg-base-200 shadow-md" {
+
+        // Mobile search modal
+        dialog id="mobile-search-modal" class="modal modal-top sm:hidden" {
+            div class="modal-box flex flex-col gap-4" {
+                div class="flex justify-between" {
+                    h3 class="font-bold text-lg" { "Search"; }
+                    form method="dialog" {
+                        button class="btn btn-square btn-ghost btn-sm " {
+                            (x_mark_solid("size-6"));
+                        }
+                    }
+                }
+                form class="flex flex-col gap-2" hx-get="/search" hx-target="body" hx-push-url="true" {
+                    input class="input w-full outline-0" name="q" type="text" placeholder="Search..." value=[search_query.map(|s| &s.q)];
+                    select class="select w-full cursor-pointer outline-0" name="t" {
+                        @for media_type in MEDIA_TYPES {
+                            option selected[search_query.is_some_and(|s| s.t == media_type)] { (media_type); }
+                        }
+                    }
+                    button class="btn btn-primary w-full" type="submit" { "Search"; }
+                }
+            }
+            // Hidden form, closes the dialog when pressing outside it
+            form method="dialog" class="modal-backdrop" {
+                button {}
+            }
+        }
+
+        // Desktop navbar
+        div class="hidden sm:flex navbar fixed top-0 z-1 bg-base-200 shadow-md" {
             div class="flex-1 flex gap-2" {
                 a class="btn btn-square btn-ghost text-xl" href="/" {
                     (home_solid("size-8"));
                 }
                 img class="hidden lg:block w-[min(20vw,24rem)]" src="/static/logos/StreamStashWithTextWhite.svg";
-                img class="w-8 hidden sm:max-lg:block" src="/static/logos/StreamStashNoText.svg";
+                img class="w-8 hidden max-lg:block" src="/static/logos/StreamStashNoText.svg";
             }
-            form class="sm:flex-1 flex max-sm:flex-col max-sm:w-80 max-sm:min-w-26 max-sm:mx-4 justify-center" hx-get="/search" hx-target="body" hx-push-url="true" {
-                input class="sm:flex-1 input min-h-10 outline-0 sm:min-w-60 max-sm:w-full max-sm:rounded-b-none sm:rounded-r-none" name="q" type="text" placeholder="Search" value=[search_query.map(|s| &s.q)];
-                select class="select outline-0 w-full sm:w-26 cursor-pointer max-sm:rounded-none max-sm:-mt-px sm:rounded-l-none sm:-ml-px" name="t" {
+            form class="flex-1 flex justify-center" hx-get="/search" hx-target="body" hx-push-url="true" {
+                input class="flex-1 input min-h-10 outline-0 min-w-60 rounded-r-none" name="q" type="text" placeholder="Search" value=[search_query.map(|s| &s.q)];
+                select class="select outline-0 w-26 cursor-pointer rounded-l-none -ml-px" name="t" {
                     @for media_type in MEDIA_TYPES {
-                        option selected[search_query.is_some_and(|s| s.t == media_type)] { (media_type) }
+                        option selected[search_query.is_some_and(|s| s.t == media_type)] { (media_type); }
                     }
                 }
-                input class="btn btn-primary btn-soft max-sm:rounded-t-none max-sm:-mt-px sm:ml-1" type="submit" value="Search";
+                input class="btn btn-primary btn-soft ml-1" type="submit" value="Search";
             }
             div class="flex-1 flex justify-end" {
                 button class="btn btn-square btn-ghost" {

@@ -13,8 +13,8 @@ pub fn search_results_count_bar(
             (oob_children);
         },
         None => html! {
-            // top-0 on mobile (sticky), top-16 for navbar on desktop (fixed)
-            div class="sticky sm:fixed top-10 sm:top-16 inset-x-0 w-full py-2 z-1 bg-base-200 shadow-md flex justify-center" {
+            // top-* for navbar
+            div class="fixed top-10 sm:top-16 inset-x-0 w-full py-2 z-1 bg-base-200 shadow-md flex justify-center" {
                 div class="relative" {
                     p id="search-results-count" class="text-lg" {
                         "Results shown: " (shown_results) " of " (total_results);

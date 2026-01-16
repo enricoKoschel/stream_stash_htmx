@@ -14,7 +14,7 @@ pub fn search_layout(
         (main_navbar(Some(search_query)));
         (search_results_count_bar(shown_results, total_results, None));
         // Padding for the navbar and footer
-        div class="px-4 pt-4 sm:pt-31 pb-14 sm:pb-18" {
+        div class="px-4 pt-25 sm:pt-31 pb-14 sm:pb-18" {
             (children);
         }
         (main_footer());
