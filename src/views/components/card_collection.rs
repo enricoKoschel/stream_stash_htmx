@@ -18,7 +18,8 @@ pub fn card_collection(cards: &[Markup], after_search: bool, only_cards: bool) -
         html! {
             @if let Some(rendered_cards) = rendered_cards {
                 div class="grid gap-4
-                grid-cols-[repeat(auto-fill,minmax(150px,1fr))]
+                grid-cols-[repeat(auto-fill,minmax(130px,1fr))]
+                sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))]
                 lg:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]
                 2xl:grid-cols-[repeat(auto-fill,minmax(250px,1fr))]"
                 {

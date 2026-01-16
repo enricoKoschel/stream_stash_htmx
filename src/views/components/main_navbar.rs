@@ -1,11 +1,23 @@
 use crate::data_source::MEDIA_TYPES;
 use crate::data_source::search::SearchQuery;
-use crate::views::icons::{bars_3_solid, home_solid};
+use crate::views::icons::{bars_3_solid, chevron_double_up_solid, home_solid};
 use maud::{Markup, html};
 
 pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
     html! {
-        div class="flex navbar fixed top-0 z-1 bg-base-200 shadow-md" {
+        // Mini navbar - fixed behind main navbar on mobile, hidden on desktop
+        // z-0 so it sits behind the main navbar (z-1) and is revealed when main scrolls away
+        div class="sm:hidden fixed top-0 inset-x-0 z-0 bg-base-200 shadow-md flex justify-between items-center px-2 py-1" {
+            a class="btn btn-square btn-ghost btn-sm" href="/" {
+                (home_solid("size-6"));
+            }
+            img class="w-6" src="/static/logos/StreamStashNoText.svg";
+            button class="btn btn-square btn-ghost btn-sm" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" {
+                (chevron_double_up_solid("size-6"));
+            }
+        }
+        // Main navbar - scrolls on mobile, fixed on desktop
+        div class="flex navbar sm:fixed top-0 z-1 bg-base-200 shadow-md" {
             div class="flex-1 flex gap-2" {
                 a class="btn btn-square btn-ghost text-xl" href="/" {
                     (home_solid("size-8"));
