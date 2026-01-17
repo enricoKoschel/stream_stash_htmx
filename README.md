@@ -25,9 +25,30 @@ Click [here](https://developer.themoviedb.org/docs/getting-started) for instruct
 TODO: Add ip, port, log level, google client id, secret?
 ```toml
 TMDB_READ_ACCESS_TOKEN="" # Your TMDB API Read Access Token
+DATABASE_URL="" # URL to the Stream Stash DB (e.g.: "sqlite:stream_stash.db")
 ```
 
 - Make sure to use the TMDB API Read Access Token, not the API Key (both can be found [here](https://www.themoviedb.org/settings/api) after your request to access the TMDB API has been granted)
+
+### Setup local databse 
+
+#### Install sqlx-cli
+
+```bash
+cargo install sqlx-cli
+```
+
+#### Create local DB
+
+```bash
+sqlx database create
+```
+
+#### Run migrations
+
+```bash
+sqlx migrate run
+```
 
 ### Install cargo watch (optional, but recommended)
 

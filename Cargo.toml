@@ -15,3 +15,7 @@ anyhow = "1.0.100"
 dotenvy = "0.15.7"
 url = "2.5.8"
 maud = { version = "0.27.0", features = ["axum"] }
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite", "derive", "macros", "migrate"] }
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3

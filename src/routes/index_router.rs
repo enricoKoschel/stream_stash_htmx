@@ -1,4 +1,5 @@
 use crate::AppState;
+use crate::data_source::db;
 use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
 use crate::data_source::tmdb::TmdbService;
 use crate::views::components::{card_collection, media_card, search_results_count_bar};
@@ -107,10 +108,15 @@ fn generate_sample_media(count: usize) -> Vec<Markup> {
     .collect()
 }
 
+async fn db_test(State(state): State<AppState>) -> impl IntoResponse {
+    format!("{:?}", db::test(&state.db_pool).await)
+}
+
 pub fn index_router() -> Router<AppState> {
     Router::new()
         .route("/", get(index))
         .route("/{count}", get(index))
         .route("/about", get(about))
         .route("/search", get(search))
+        .route("/test", get(db_test))
 }

@@ -1,6 +1,7 @@
 use serde::Deserialize;
 use std::fmt::Display;
 
+pub mod db;
 pub mod search;
 pub mod tmdb;
 

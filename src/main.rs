@@ -2,6 +2,7 @@ use crate::data_source::tmdb::TmdbService;
 use crate::routes::{index_router, media_router};
 use axum::Router;
 use axum_htmx::AutoVaryLayer;
+use sqlx::SqlitePool;
 use std::net::Ipv4Addr;
 use tokio::net::TcpListener;
 use tower_http::services::{ServeDir, ServeFile};
@@ -15,6 +16,7 @@ mod views;
 #[derive(Clone)]
 struct AppState {
     tmdb_service: TmdbService,
+    db_pool: SqlitePool,
 }
 
 #[tokio::main]
@@ -25,6 +27,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let tmdb_read_access_token = std::env::var("TMDB_READ_ACCESS_TOKEN")
         .expect("Please provide a TMDB_READ_ACCESS_TOKEN environment variable");
+    let sqlite_connection_string =
+        std::env::var("DATABASE_URL").expect("Please provide a DATABASE_URL environment variable");
 
     // TODO: Get from env
     tracing_subscriber::fmt()
@@ -33,6 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app_state = AppState {
         tmdb_service: TmdbService::new(&tmdb_read_access_token),
+        db_pool: SqlitePool::connect(&sqlite_connection_string).await?,
     };
 
     let app = Router::new()

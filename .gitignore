@@ -5,3 +5,7 @@
 !/tailwind/tailwind.css
 
 .env
+
+*.db
+*.db-wal
+*.db-shm
