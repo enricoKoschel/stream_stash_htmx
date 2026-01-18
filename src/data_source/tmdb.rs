@@ -9,7 +9,7 @@ pub const ITEMS_PER_PAGE: i32 = 20;
 
 #[derive(Clone)]
 pub struct TmdbService {
-    client: Client,
+    http_client: Client,
     api_base_url: Url,
     poster_base_url: Url,
     backdrop_base_url: Url,
@@ -60,19 +60,6 @@ pub enum ImageType {
 }
 
 impl TmdbService {
-    pub fn get_image_url(
-        &self,
-        image_path: &str,
-        image_type: ImageType,
-    ) -> Result<Url, ParseError> {
-        let image_path = image_path.strip_prefix('/').unwrap_or(image_path);
-
-        match image_type {
-            ImageType::Poster => self.poster_base_url.join(image_path),
-            ImageType::Backdrop => self.backdrop_base_url.join(image_path),
-        }
-    }
-
     pub fn new(tmdb_read_access_token: &str) -> Self {
         // TODO: Error handling here for all the expects in here?
         let mut auth_header = HeaderValue::from_str(&format!("Bearer {}", tmdb_read_access_token))
@@ -83,7 +70,7 @@ impl TmdbService {
         headers.insert(header::AUTHORIZATION, auth_header);
 
         Self {
-            client: Client::builder()
+            http_client: Client::builder()
                 .default_headers(headers)
                 .build()
                 .expect("Reqwest client could not be created for TmdbService"),
@@ -93,6 +80,19 @@ impl TmdbService {
                 .expect("URL not parseable, should not happen"),
             backdrop_base_url: Url::parse("https://image.tmdb.org/t/p/w1920_and_h1080_bestv2/")
                 .expect("URL not parseable, should not happen"),
+        }
+    }
+
+    pub fn get_image_url(
+        &self,
+        image_path: &str,
+        image_type: ImageType,
+    ) -> Result<Url, ParseError> {
+        let image_path = image_path.strip_prefix('/').unwrap_or(image_path);
+
+        match image_type {
+            ImageType::Poster => self.poster_base_url.join(image_path),
+            ImageType::Backdrop => self.backdrop_base_url.join(image_path),
         }
     }
 
@@ -124,7 +124,7 @@ impl TmdbService {
         };
         let url = self.api_base_url.join("/3/search/movie")?;
 
-        let res = self.client.get(url).query(&query).send().await?;
+        let res = self.http_client.get(url).query(&query).send().await?;
         let json = res.json::<MovieSearchResult>().await?;
 
         Ok(json)
@@ -156,7 +156,7 @@ impl TmdbService {
         };
         let url = self.api_base_url.join("/3/search/tv")?;
 
-        let res = self.client.get(url).query(&query).send().await?;
+        let res = self.http_client.get(url).query(&query).send().await?;
         let json = res.json::<TvShowSearchResult>().await?;
 
         Ok(json)
@@ -165,7 +165,7 @@ impl TmdbService {
     pub async fn movie_details(&self, movie_id: i32) -> Result<Movie, anyhow::Error> {
         let url = self.api_base_url.join(&format!("/3/movie/{movie_id}"))?;
 
-        let res = self.client.get(url).send().await?;
+        let res = self.http_client.get(url).send().await?;
         let json = res.json::<Movie>().await?;
 
         Ok(json)
@@ -174,7 +174,7 @@ impl TmdbService {
     pub async fn tv_show_details(&self, tv_show_id: i32) -> Result<TvShow, anyhow::Error> {
         let url = self.api_base_url.join(&format!("/3/tv/{tv_show_id}"))?;
 
-        let res = self.client.get(url).send().await?;
+        let res = self.http_client.get(url).send().await?;
         let json = res.json::<TvShow>().await?;
 
         Ok(json)

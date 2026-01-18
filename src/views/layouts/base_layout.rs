@@ -1,11 +1,11 @@
 use maud::{DOCTYPE, Markup, html};
 
-pub fn base_layout(children: Markup) -> Markup {
+pub fn base_layout(google_client_id: &str, login_redirect_url: &str, children: Markup) -> Markup {
     html! {
         (DOCTYPE);
         html {
             head {
-                script src="/static/htmx.min.js" {}
+                script src="/static/htmx.min.js" async {}
                 link rel="stylesheet" href="/static/styles.css";
 
                 meta name="viewport" content="width=device-width, height=device-height, minimum-scale=1.0, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
@@ -18,8 +18,18 @@ pub fn base_layout(children: Markup) -> Markup {
                 link rel="icon" type="image/ico" href="/static/favicon.ico";
 
                 title { "Stream Stash" }
+
+                // Has to be at the bottom and whithout async or defer
+                // Otherwise a red background appears while loading
+                script src="https://accounts.google.com/gsi/client" {}
             }
             body hx-boost="true" {
+                div id="g_id_onload" class="hidden"
+                    data-client_id=(google_client_id)
+                    data-context="signin"
+                    data-ux_mode="popup"
+                    data-login_uri=(login_redirect_url)
+                    data-auto_prompt="false" {}
                 (children);
             }
         }

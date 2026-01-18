@@ -2,6 +2,7 @@ use serde::Deserialize;
 use std::fmt::Display;
 
 pub mod db;
+pub mod google_auth;
 pub mod search;
 pub mod tmdb;
 

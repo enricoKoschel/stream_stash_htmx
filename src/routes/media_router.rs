@@ -60,6 +60,8 @@ async fn media(
 
     maybe_document(
         hx_request,
+        &state.google_client_id,
+        state.login_url,
         media_page(
             title,
             overview,

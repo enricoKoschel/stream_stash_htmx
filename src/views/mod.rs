@@ -7,11 +7,16 @@ pub mod icons;
 pub mod layouts;
 pub mod pages;
 
-pub fn maybe_document(hx_request: bool, children: Markup) -> Response {
+pub fn maybe_document(
+    hx_request: bool,
+    google_client_id: &str,
+    login_redirect_url: &str,
+    children: Markup,
+) -> Response {
     if hx_request {
         children
     } else {
-        base_layout(children)
+        base_layout(google_client_id, login_redirect_url, children)
     }
     .into_response()
 }
