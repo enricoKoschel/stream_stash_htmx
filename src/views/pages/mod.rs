@@ -2,10 +2,12 @@ mod about_page;
 mod login_page;
 mod main_page;
 mod media_page;
+mod privacy_page;
 mod search_page;
 
 pub use about_page::about_page;
 pub use login_page::login_page;
 pub use main_page::main_page;
 pub use media_page::media_page;
+pub use privacy_page::privacy_page;
 pub use search_page::search_page;

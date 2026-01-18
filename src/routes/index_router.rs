@@ -3,7 +3,7 @@ use crate::data_source::db;
 use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
 use crate::data_source::tmdb::TmdbService;
 use crate::views::components::{card_collection, media_card, search_results_count_bar};
-use crate::views::pages::{about_page, login_page, main_page, search_page};
+use crate::views::pages::{about_page, login_page, main_page, privacy_page, search_page};
 use crate::views::{maybe_document, maybe_redirect};
 use axum::Form;
 use axum::extract::{Path, Query, State};
@@ -40,6 +40,18 @@ async fn about(
         &state.google_client_id,
         state.login_url,
         about_page(),
+    )
+}
+
+async fn privacy(
+    HxRequest(hx_request): HxRequest,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    maybe_document(
+        hx_request,
+        &state.google_client_id,
+        state.login_url,
+        privacy_page(),
     )
 }
 
@@ -146,6 +158,8 @@ async fn db_test(State(state): State<AppState>) -> impl IntoResponse {
     format!("{:?}", db::test(&state.db_pool).await)
 }
 
+// TODO: Redirect here when not logged in (some exceptions, like about page and privacy policy)
+// TODO: Allow account deletion
 async fn login_get(
     HxRequest(hx_request): HxRequest,
     State(state): State<AppState>,
@@ -200,6 +214,7 @@ pub fn index_router() -> Router<AppState> {
         .route("/", get(index))
         .route("/{count}", get(index))
         .route("/about", get(about))
+        .route("/privacy", get(privacy))
         .route("/search", get(search))
         .route("/test", get(db_test))
         .route("/login", get(login_get).post(login_post))

@@ -7,10 +7,14 @@ pub fn login_page() -> Markup {
 
     main_layout(html! {
         dialog id="login-modal" class="modal modal-open" {
-            div class="modal-box" {
-                h2 class="text-2xl font-bold text-center mb-6" { "Sign in to Stream Stash" }
+            div class="modal-box flex flex-col gap-6" {
+                h2 class="text-2xl font-bold text-center" { "Sign in to Stream Stash"; }
                 div class="flex justify-center" {
                     (google_login_button());
+                }
+                div class="flex justify-center gap-4 text-sm" {
+                    a class="link" href="/privacy" { "Privacy Policy"; }
+                    a class="link" href="/about" { "About"; }
                 }
             }
         }
