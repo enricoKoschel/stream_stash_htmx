@@ -81,3 +81,25 @@ WHERE google_account_id = ?"#,
 
     Ok(user)
 }
+
+pub async fn get_user_by_id(pool: &SqlitePool, id: i64) -> Result<User, DbError> {
+    let user = query_as!(
+        User,
+        r#"
+SELECT *
+FROM users
+WHERE id = ?"#,
+        id,
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|e| {
+        if let sqlx::Error::RowNotFound = &e {
+            return DbError::UserNotFound;
+        }
+
+        DbError::QueryError(e)
+    })?;
+
+    Ok(user)
+}

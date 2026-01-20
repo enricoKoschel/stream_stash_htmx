@@ -1,4 +1,4 @@
-use crate::data_source::db::{DbError, create_user, get_user_by_google_account_id};
+use crate::data_source::db::{DbError, create_user, get_user_by_google_account_id, get_user_by_id};
 use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
 use crate::data_source::tmdb::TmdbService;
 use crate::views::components::{card_collection, media_card, search_results_count_bar};
@@ -6,7 +6,7 @@ use crate::views::pages::{about_page, login_page, main_page, privacy_page, searc
 use crate::views::{maybe_document, maybe_redirect};
 use crate::{AppSession, AppState};
 use axum::Form;
-use axum::extract::{Path, Query, State};
+use axum::extract::{Query, State};
 use axum::http::{StatusCode, Uri};
 use axum::response::{IntoResponse, Response};
 use axum::{Router, routing::get};
@@ -20,10 +20,9 @@ use tower_sessions::Session;
 async fn index(
     HxRequest(hx_request): HxRequest,
     State(state): State<AppState>,
-    path: Option<Path<usize>>,
+    _session: AppSession,
 ) -> impl IntoResponse {
-    let count = path.map_or(50, |p| p.0);
-    let media = generate_sample_media(count);
+    let media = generate_sample_media(50);
     maybe_document(
         hx_request,
         &state.google_client_id,
@@ -60,6 +59,7 @@ async fn search(
     HxRequest(hx_request): HxRequest,
     Query(query): Query<SearchQuery>,
     State(state): State<AppState>,
+    _session: AppSession,
     uri: Uri,
 ) -> impl IntoResponse {
     if query.q.trim().is_empty() {
@@ -237,6 +237,7 @@ async fn login_post(
     }
 }
 
+// TODO: If not logged in, don't logout
 async fn logout(session: Session) -> impl IntoResponse {
     if let Err(e) = session.delete().await {
         tracing::error!("Failed to delete session: {}", e);
@@ -244,14 +245,21 @@ async fn logout(session: Session) -> impl IntoResponse {
     axum::response::Redirect::to("/login")
 }
 
+async fn profile(State(state): State<AppState>, session: AppSession) -> impl IntoResponse {
+    format!(
+        "{:?}",
+        get_user_by_id(&state.db_pool, session.account_id).await
+    )
+}
+
 pub fn index_router() -> Router<AppState> {
     Router::new()
         .route("/", get(index))
-        .route("/{count}", get(index))
         .route("/about", get(about))
         .route("/privacy", get(privacy))
         .route("/search", get(search))
         .route("/test", get(db_test))
         .route("/login", get(login_get).post(login_post))
         .route("/logout", get(logout))
+        .route("/profile", get(profile))
 }

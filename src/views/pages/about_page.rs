@@ -1,8 +1,8 @@
-use crate::views::layouts::main_layout;
+use crate::views::layouts::logged_out_layout;
 use maud::{Markup, html};
 
 pub fn about_page() -> Markup {
-    main_layout(html! {
+    logged_out_layout(html! {
         div class="flex flex-col items-center" {
             h1 class="text-6xl font-medium mb-4" { "About"; }
             img class="w-100 mb-12" src="/static/logos/StreamStashWithTextWhite.svg";

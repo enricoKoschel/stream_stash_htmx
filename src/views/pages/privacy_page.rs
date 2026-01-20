@@ -1,8 +1,8 @@
-use crate::views::layouts::main_layout;
+use crate::views::layouts::logged_out_layout;
 use maud::{Markup, html};
 
 pub fn privacy_page() -> Markup {
-    main_layout(html! {
+    logged_out_layout(html! {
         div class="max-w-4xl flex flex-col mx-auto gap-8" {
             h1 class="text-4xl font-bold" { "Privacy Policy"; }
             p class="text-base-content/70" { "Last updated: January 2025"; }

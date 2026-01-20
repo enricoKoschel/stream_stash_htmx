@@ -1,3 +1,4 @@
+use crate::AppSession;
 use crate::data_source::MediaType;
 use crate::data_source::tmdb::ImageType;
 use crate::views::pages::media_page;
@@ -11,6 +12,7 @@ async fn media(
     HxRequest(hx_request): HxRequest,
     State(state): State<AppState>,
     Path((media_type, id)): Path<(MediaType, i32)>,
+    _session: AppSession,
 ) -> impl IntoResponse {
     // TODO: Get db entry for media
     let (title, overview, release_date, poster_path, backdrop_path) = match media_type {

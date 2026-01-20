@@ -1,6 +1,7 @@
 use crate::data_source::MEDIA_TYPES;
 use crate::data_source::search::SearchQuery;
-use crate::views::icons::{bars_3_solid, home_solid, magnifying_glass_solid, x_mark_solid};
+use crate::views::components::navbar_dropdown;
+use crate::views::icons::{home_solid, magnifying_glass_solid, x_mark_solid};
 use maud::{Markup, html};
 
 pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
@@ -19,9 +20,7 @@ pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
                 button class="btn btn-square btn-ghost btn-sm" onclick="document.getElementById('mobile-search-modal').showModal()" {
                     (magnifying_glass_solid("size-6"));
                 }
-                button class="btn btn-square btn-ghost btn-sm" {
-                    (bars_3_solid("size-6"));
-                }
+                (navbar_dropdown("btn-sm", "size-6"));
             }
         }
 
@@ -74,9 +73,7 @@ pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
                 input class="btn btn-primary btn-soft" type="submit" value="Search";
             }
             div class="flex-1 flex justify-end" {
-                button class="btn btn-square btn-ghost" {
-                    (bars_3_solid("size-8"));
-                }
+                (navbar_dropdown("btn-md", "size-8"));
             }
         }
     }
