@@ -1,10 +1,10 @@
-use crate::AppState;
-use crate::data_source::db;
+use crate::data_source::db::{DbError, create_user, get_user_by_google_account_id};
 use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
 use crate::data_source::tmdb::TmdbService;
 use crate::views::components::{card_collection, media_card, search_results_count_bar};
 use crate::views::pages::{about_page, login_page, main_page, privacy_page, search_page};
 use crate::views::{maybe_document, maybe_redirect};
+use crate::{AppSession, AppState};
 use axum::Form;
 use axum::extract::{Path, Query, State};
 use axum::http::{StatusCode, Uri};
@@ -15,6 +15,7 @@ use axum_htmx::HxRequest;
 use maud::Markup;
 use serde::Deserialize;
 use std::iter;
+use tower_sessions::Session;
 
 async fn index(
     HxRequest(hx_request): HxRequest,
@@ -154,11 +155,10 @@ fn generate_sample_media(count: usize) -> Vec<Markup> {
     .collect()
 }
 
-async fn db_test(State(state): State<AppState>) -> impl IntoResponse {
-    format!("{:?}", db::test(&state.db_pool).await)
+async fn db_test(State(state): State<AppState>, session: AppSession) -> impl IntoResponse {
+    format!("{:?}", session)
 }
 
-// TODO: Redirect here when not logged in (some exceptions, like about page and privacy policy)
 // TODO: Allow account deletion
 async fn login_get(
     HxRequest(hx_request): HxRequest,
@@ -181,6 +181,7 @@ struct LoginPostBody {
 async fn login_post(
     State(state): State<AppState>,
     cookies: CookieManager,
+    session: Session,
     Form(body): Form<LoginPostBody>,
 ) -> impl IntoResponse {
     let csrf_cookie = cookies.get("g_csrf_token").map(|c| c.value().to_string());
@@ -199,7 +200,34 @@ async fn login_post(
     {
         Ok(user) => {
             tracing::info!("User logged in: {:?}", user);
-            // TODO: Create session, store user in DB, set session cookie
+
+            let account_id = match get_user_by_google_account_id(&state.db_pool, &user.sub).await {
+                Ok(user) => user.id,
+                Err(DbError::UserNotFound) => {
+                    // TODO: Error handling!
+                    create_user(
+                        &state.db_pool,
+                        Some(&user.sub),
+                        user.email.as_deref(),
+                        user.name.as_deref(),
+                        user.picture.as_deref(),
+                    )
+                    .await
+                    .unwrap()
+                    .id
+                }
+                Err(_) => todo!(),
+            };
+
+            if let Err(e) = session.insert("session", AppSession { account_id }).await {
+                tracing::error!("Failed to store session: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to create session",
+                )
+                    .into_response();
+            }
+
             axum::response::Redirect::to("/").into_response()
         }
         Err(e) => {
@@ -207,6 +235,13 @@ async fn login_post(
             (StatusCode::UNAUTHORIZED, "Invalid credentials").into_response()
         }
     }
+}
+
+async fn logout(session: Session) -> impl IntoResponse {
+    if let Err(e) = session.delete().await {
+        tracing::error!("Failed to delete session: {}", e);
+    }
+    axum::response::Redirect::to("/login")
 }
 
 pub fn index_router() -> Router<AppState> {
@@ -218,4 +253,5 @@ pub fn index_router() -> Router<AppState> {
         .route("/search", get(search))
         .route("/test", get(db_test))
         .route("/login", get(login_get).post(login_post))
+        .route("/logout", get(logout))
 }

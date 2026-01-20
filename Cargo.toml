@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 axum = { version = "0.8.8", features = ["form"] }
-tokio = { version = "1.49.0", features = ["rt-multi-thread"] }
+tokio = { version = "1.49.0", features = ["rt-multi-thread", "signal"] }
 tower-http = { version = "0.6.8", features = ["fs", "trace"] }
 tracing-subscriber = "0.3.22"
 axum-htmx = { version = "0.8.1", features = ["auto-vary"] }
@@ -21,11 +21,15 @@ sqlx = { version = "0.8.6", features = [
     "derive",
     "macros",
     "migrate",
+    "time",
 ] }
 axum-cookie = "0.2.4"
 thiserror = "2.0.18"
 jsonwebtoken = { version = "10.2.0", features = ["aws_lc_rs"] }
 tracing = "0.1.44"
+tower-sessions = "0.14.0"
+tower-sessions-sqlx-store = { version = "0.15.0", features = ["sqlite"] }
+time = "0.3.45"
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3
