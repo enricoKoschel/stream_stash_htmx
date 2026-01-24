@@ -30,7 +30,12 @@ pub fn base_layout(google_client_id: &str, login_redirect_url: &str, children: M
                     data-ux_mode="popup"
                     data-login_uri=(login_redirect_url)
                     data-auto_prompt="false" {}
-                (children);
+                noscript class="text-6xl flex justify-center items-center w-screen h-screen text-center" {
+                    "This site requires JavaScript to function. Please enable JavaScript in your browser settings.";
+                }
+                div class="noscript:hidden" {
+                    (children);
+                }
             }
         }
     }
