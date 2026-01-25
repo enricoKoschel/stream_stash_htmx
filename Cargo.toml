@@ -29,7 +29,7 @@ jsonwebtoken = { version = "10.2.0", features = ["aws_lc_rs"] }
 tracing = "0.1.44"
 tower-sessions = "0.14.0"
 tower-sessions-sqlx-store = { version = "0.15.0", features = ["sqlite"] }
-time = "0.3.45"
+time = { version = "0.3.45", features = ["formatting"] }
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3

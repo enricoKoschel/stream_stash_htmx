@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use sqlx::{SqlitePool, query_as};
+use sqlx::{SqlitePool, query, query_as};
 use thiserror::Error;
 use time::OffsetDateTime;
 
@@ -16,6 +16,7 @@ pub enum DbError {
 #[derive(Debug, Deserialize)]
 pub struct User {
     pub id: i64,
+    #[allow(unused)]
     pub google_account_id: Option<String>,
     pub email: Option<String>,
     pub username: Option<String>,
@@ -102,4 +103,20 @@ WHERE id = ?"#,
     })?;
 
     Ok(user)
+}
+
+// TODO: Delete all data from this user from all data tables
+pub async fn delete_user(pool: &SqlitePool, id: i64) -> Result<(), DbError> {
+    match query!(
+        r#"
+DELETE FROM users
+WHERE id = ?"#,
+        id,
+    )
+    .execute(pool)
+    .await
+    {
+        Ok(_) => Ok(()),
+        Err(e) => Err(DbError::QueryError(e)),
+    }
 }

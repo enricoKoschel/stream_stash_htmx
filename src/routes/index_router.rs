@@ -1,20 +1,26 @@
-use crate::data_source::db::{DbError, create_user, get_user_by_google_account_id, get_user_by_id};
+use crate::data_source::db::{
+    DbError, create_user, delete_user, get_user_by_google_account_id, get_user_by_id,
+};
 use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
 use crate::data_source::tmdb::TmdbService;
 use crate::views::components::{card_collection, media_card, search_results_count_bar};
-use crate::views::pages::{about_page, login_page, main_page, privacy_page, search_page};
+use crate::views::pages::{
+    about_page, login_page, main_page, privacy_page, profile_page, search_page,
+};
 use crate::views::{maybe_document, maybe_redirect};
 use crate::{AppSession, AppState};
 use axum::Form;
+use axum::Router;
 use axum::extract::{Query, State};
 use axum::http::{StatusCode, Uri};
 use axum::response::{IntoResponse, Response};
-use axum::{Router, routing::get};
+use axum::routing::{get, post};
 use axum_cookie::CookieManager;
 use axum_htmx::HxRequest;
 use maud::Markup;
 use serde::Deserialize;
 use std::iter;
+use time::format_description::well_known::Rfc2822;
 use tower_sessions::Session;
 
 async fn index(
@@ -155,11 +161,6 @@ fn generate_sample_media(count: usize) -> Vec<Markup> {
     .collect()
 }
 
-async fn db_test(State(state): State<AppState>, session: AppSession) -> impl IntoResponse {
-    format!("{:?}", session)
-}
-
-// TODO: Allow account deletion
 async fn login_get(
     HxRequest(hx_request): HxRequest,
     State(state): State<AppState>,
@@ -245,11 +246,53 @@ async fn logout(session: Session) -> impl IntoResponse {
     axum::response::Redirect::to("/login")
 }
 
-async fn profile(State(state): State<AppState>, session: AppSession) -> impl IntoResponse {
-    format!(
-        "{:?}",
-        get_user_by_id(&state.db_pool, session.account_id).await
+async fn profile(
+    HxRequest(hx_request): HxRequest,
+    State(state): State<AppState>,
+    session: AppSession,
+) -> impl IntoResponse {
+    // TODO: Error handling!
+    let user = get_user_by_id(&state.db_pool, session.account_id)
+        .await
+        .unwrap();
+    maybe_document(
+        hx_request,
+        &state.google_client_id,
+        state.login_url,
+        profile_page(
+            user.email.as_deref(),
+            user.username.as_deref(),
+            user.picture_url.as_deref(),
+            &user.created_at.format(&Rfc2822).unwrap(),
+        ),
     )
+}
+
+#[derive(Deserialize)]
+struct DeleteAccountBody {
+    confirm: String,
+}
+
+async fn delete_account(
+    State(state): State<AppState>,
+    app_session: AppSession,
+    session: Session,
+    Form(body): Form<DeleteAccountBody>,
+) -> impl IntoResponse {
+    if body.confirm.to_lowercase() != "delete" {
+        return (
+            StatusCode::NO_CONTENT,
+            [("HX-Trigger", "show-account-not-deleted-modal")],
+        );
+    }
+
+    logout(session).await;
+    // TODO: Error handling!
+    delete_user(&state.db_pool, app_session.account_id)
+        .await
+        .unwrap();
+
+    (StatusCode::NO_CONTENT, [("HX-Location", "/")])
 }
 
 pub fn index_router() -> Router<AppState> {
@@ -258,8 +301,8 @@ pub fn index_router() -> Router<AppState> {
         .route("/about", get(about))
         .route("/privacy", get(privacy))
         .route("/search", get(search))
-        .route("/test", get(db_test))
         .route("/login", get(login_get).post(login_post))
         .route("/logout", get(logout))
         .route("/profile", get(profile))
+        .route("/deleteAccount", post(delete_account))
 }
