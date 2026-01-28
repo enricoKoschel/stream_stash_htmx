@@ -1,9 +1,15 @@
+use maud::Markup;
 use reqwest::{
     Client,
     header::{self, HeaderMap, HeaderValue},
 };
 use serde::{Deserialize, Serialize};
 use url::{ParseError, Url};
+
+use crate::{
+    data_source::Media,
+    views::{components::media_card, pages::media_page},
+};
 
 pub const ITEMS_PER_PAGE: i32 = 20;
 
@@ -26,14 +32,6 @@ pub struct Movie {
     pub title: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct MovieSearchResult {
-    pub page: i32,
-    pub total_pages: i32,
-    pub total_results: i32,
-    pub results: Vec<Movie>,
-}
-
 // TODO: Other fields?
 #[derive(Debug, Deserialize)]
 pub struct TvShow {
@@ -45,12 +43,12 @@ pub struct TvShow {
     pub poster_path: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct TvShowSearchResult {
+#[derive(Debug)]
+pub struct SearchResult {
     pub page: i32,
     pub total_pages: i32,
     pub total_results: i32,
-    pub results: Vec<TvShow>,
+    pub results: Vec<Media>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -100,8 +98,7 @@ impl TmdbService {
         &self,
         search_term: &str,
         page: i32,
-    ) -> Result<MovieSearchResult, anyhow::Error> {
-        // TODO: Remove this and use serde-json?
+    ) -> Result<SearchResult, anyhow::Error> {
         #[derive(Serialize)]
         struct QueryParams<'a> {
             query: &'a str,
@@ -124,18 +121,37 @@ impl TmdbService {
         };
         let url = self.api_base_url.join("/3/search/movie")?;
 
-        let res = self.http_client.get(url).query(&query).send().await?;
-        let json = res.json::<MovieSearchResult>().await?;
+        #[derive(Deserialize)]
+        struct ApiResponse {
+            page: i32,
+            total_pages: i32,
+            total_results: i32,
+            results: Vec<Movie>,
+        }
 
-        Ok(json)
+        let response = self
+            .http_client
+            .get(url)
+            .query(&query)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<ApiResponse>()
+            .await?;
+
+        Ok(SearchResult {
+            page: response.page,
+            total_pages: response.total_pages,
+            total_results: response.total_results,
+            results: response.results.into_iter().map(Media::Movie).collect(),
+        })
     }
 
     pub async fn search_tv_shows(
         &self,
         search_term: &str,
         page: i32,
-    ) -> Result<TvShowSearchResult, anyhow::Error> {
-        // TODO: Remove this and use serde-json?
+    ) -> Result<SearchResult, anyhow::Error> {
         #[derive(Serialize)]
         struct QueryParams<'a> {
             query: &'a str,
@@ -156,27 +172,109 @@ impl TmdbService {
         };
         let url = self.api_base_url.join("/3/search/tv")?;
 
-        let res = self.http_client.get(url).query(&query).send().await?;
-        let json = res.json::<TvShowSearchResult>().await?;
+        #[derive(Deserialize)]
+        struct ApiResponse {
+            page: i32,
+            total_pages: i32,
+            total_results: i32,
+            results: Vec<TvShow>,
+        }
 
-        Ok(json)
+        let response = self
+            .http_client
+            .get(url)
+            .query(&query)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<ApiResponse>()
+            .await?;
+
+        Ok(SearchResult {
+            page: response.page,
+            total_pages: response.total_pages,
+            total_results: response.total_results,
+            results: response.results.into_iter().map(Media::TvShow).collect(),
+        })
     }
 
     pub async fn movie_details(&self, movie_id: i32) -> Result<Movie, anyhow::Error> {
         let url = self.api_base_url.join(&format!("/3/movie/{movie_id}"))?;
 
-        let res = self.http_client.get(url).send().await?;
-        let json = res.json::<Movie>().await?;
+        let movie = self
+            .http_client
+            .get(url)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<Movie>()
+            .await?;
 
-        Ok(json)
+        Ok(movie)
     }
 
     pub async fn tv_show_details(&self, tv_show_id: i32) -> Result<TvShow, anyhow::Error> {
         let url = self.api_base_url.join(&format!("/3/tv/{tv_show_id}"))?;
 
-        let res = self.http_client.get(url).send().await?;
-        let json = res.json::<TvShow>().await?;
+        let tv_show = self
+            .http_client
+            .get(url)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<TvShow>()
+            .await?;
 
-        Ok(json)
+        Ok(tv_show)
+    }
+
+    fn get_string_or_default<'a>(value: Option<&'a str>, default: &'a str) -> &'a str {
+        value.filter(|s| !s.trim().is_empty()).unwrap_or(default)
+    }
+
+    fn get_image_url_string(
+        &self,
+        image_path: Option<&str>,
+        image_type: ImageType,
+    ) -> Option<String> {
+        image_path
+            .filter(|s| !s.trim().is_empty())
+            .and_then(|path| self.get_image_url(path, image_type).ok())
+            .map(String::from)
+    }
+
+    pub fn map_media_to_card(&self, media: &Media, load_more_url: Option<&str>) -> Markup {
+        let title = Self::get_string_or_default(media.title(), "????");
+        let year = media
+            .release_date()
+            .filter(|d| d.trim().len() >= 4)
+            .map(|d| &d[0..4])
+            .unwrap_or("????");
+        let poster_url = self.get_image_url_string(media.poster_path(), ImageType::Poster);
+        let media_page_url = format!("/media/{}/{}", media.r#type(), media.id());
+
+        media_card(
+            title,
+            year,
+            poster_url.as_deref(),
+            &media_page_url,
+            load_more_url,
+        )
+    }
+
+    pub fn map_media_to_page(&self, media: &Media) -> Markup {
+        let title = Self::get_string_or_default(media.title(), "????");
+        let overview = Self::get_string_or_default(media.overview(), "");
+        let release_date = Self::get_string_or_default(media.release_date(), "????-??-??");
+        let poster_url = self.get_image_url_string(media.poster_path(), ImageType::Poster);
+        let backdrop_url = self.get_image_url_string(media.backdrop_path(), ImageType::Backdrop);
+
+        media_page(
+            title,
+            overview,
+            release_date,
+            poster_url.as_deref(),
+            backdrop_url.as_deref(),
+        )
     }
 }

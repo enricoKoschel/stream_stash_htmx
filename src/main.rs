@@ -25,7 +25,7 @@ mod views;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AppSession {
-    pub account_id: i64,
+    pub user_id: i64,
 }
 
 impl<S> FromRequestParts<S> for AppSession

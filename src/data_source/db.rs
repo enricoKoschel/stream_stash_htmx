@@ -1,3 +1,4 @@
+use crate::data_source::{MediaState, MediaType};
 use serde::Deserialize;
 use sqlx::{SqlitePool, query, query_as};
 use thiserror::Error;
@@ -31,7 +32,7 @@ pub async fn create_user(
     username: Option<&str>,
     picture_url: Option<&str>,
 ) -> Result<User, DbError> {
-    let user = query_as!(
+    query_as!(
         User,
         r#"
 INSERT INTO users (google_account_id, email, username, picture_url)
@@ -48,21 +49,20 @@ RETURNING *"#,
         if let sqlx::Error::Database(db_err) = &e
             && db_err.message() == "UNIQUE constraint failed: users.google_account_id"
         {
-            return DbError::UserWithGoogleAccountIdAlreadyExists(
+            DbError::UserWithGoogleAccountIdAlreadyExists(
                 google_account_id.unwrap_or_default().to_string(),
-            );
+            )
+        } else {
+            DbError::QueryError(e)
         }
-        DbError::QueryError(e)
-    })?;
-
-    Ok(user)
+    })
 }
 
 pub async fn get_user_by_google_account_id(
     pool: &SqlitePool,
     google_account_id: &str,
 ) -> Result<User, DbError> {
-    let user = query_as!(
+    query_as!(
         User,
         r#"
 SELECT *
@@ -74,17 +74,15 @@ WHERE google_account_id = ?"#,
     .await
     .map_err(|e| {
         if let sqlx::Error::RowNotFound = &e {
-            return DbError::UserNotFound;
+            DbError::UserNotFound
+        } else {
+            DbError::QueryError(e)
         }
-
-        DbError::QueryError(e)
-    })?;
-
-    Ok(user)
+    })
 }
 
 pub async fn get_user_by_id(pool: &SqlitePool, id: i64) -> Result<User, DbError> {
-    let user = query_as!(
+    query_as!(
         User,
         r#"
 SELECT *
@@ -96,13 +94,11 @@ WHERE id = ?"#,
     .await
     .map_err(|e| {
         if let sqlx::Error::RowNotFound = &e {
-            return DbError::UserNotFound;
+            DbError::UserNotFound
+        } else {
+            DbError::QueryError(e)
         }
-
-        DbError::QueryError(e)
-    })?;
-
-    Ok(user)
+    })
 }
 
 // TODO: Delete all data from this user from all data tables
@@ -119,4 +115,25 @@ WHERE id = ?"#,
         Ok(_) => Ok(()),
         Err(e) => Err(DbError::QueryError(e)),
     }
+}
+
+#[derive(Debug)]
+pub struct Media {
+    pub id: i64,
+    pub r#type: MediaType,
+    pub state: MediaState,
+}
+
+pub async fn get_media_by_user_id(pool: &SqlitePool, user_id: i64) -> Result<Vec<Media>, DbError> {
+    query_as!(
+        Media,
+        r#"
+SELECT id, type as "type: MediaType", state as "state: MediaState"
+FROM media
+WHERE user_id = ?"#,
+        user_id,
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(DbError::QueryError)
 }

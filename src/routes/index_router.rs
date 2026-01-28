@@ -1,9 +1,11 @@
 use crate::data_source::db::{
-    DbError, create_user, delete_user, get_user_by_google_account_id, get_user_by_id,
+    DbError, create_user, delete_user, get_media_by_user_id, get_user_by_google_account_id,
+    get_user_by_id,
 };
 use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
 use crate::data_source::tmdb::TmdbService;
-use crate::views::components::{card_collection, media_card, search_results_count_bar};
+use crate::data_source::{Media, MediaType};
+use crate::views::components::{card_collection, search_results_count_bar};
 use crate::views::pages::{
     about_page, login_page, main_page, privacy_page, profile_page, search_page,
 };
@@ -17,23 +19,44 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum_cookie::CookieManager;
 use axum_htmx::HxRequest;
-use maud::Markup;
 use serde::Deserialize;
-use std::iter;
 use time::format_description::well_known::Rfc2822;
 use tower_sessions::Session;
 
 async fn index(
     HxRequest(hx_request): HxRequest,
     State(state): State<AppState>,
-    _session: AppSession,
+    session: AppSession,
 ) -> impl IntoResponse {
-    let media = generate_sample_media(50);
+    // TODO: Error handling!
+    let media = get_media_by_user_id(&state.db_pool, session.user_id)
+        .await
+        .unwrap();
+
+    let mut cards = Vec::with_capacity(media.len());
+    for m in &media {
+        let media = match m.r#type {
+            // TODO: Error handling!
+            MediaType::Movies => {
+                Media::Movie(state.tmdb_service.movie_details(m.id as i32).await.unwrap())
+            }
+            MediaType::TvShows => Media::TvShow(
+                state
+                    .tmdb_service
+                    .tv_show_details(m.id as i32)
+                    .await
+                    .unwrap(),
+            ),
+        };
+
+        cards.push(state.tmdb_service.map_media_to_card(&media, None));
+    }
+
     maybe_document(
         hx_request,
         &state.google_client_id,
         state.login_url,
-        main_page(&media),
+        main_page(&cards),
     )
 }
 
@@ -139,28 +162,6 @@ async fn handle_initial_search(
     )
 }
 
-fn generate_sample_media(count: usize) -> Vec<Markup> {
-    iter::repeat_with(|| [
-        media_card(
-            "Harry Potter and the Philosopher's Stone",
-            "2001",
-            Some("https://image.tmdb.org/t/p/w600_and_h900_bestv2/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg"),
-            "",
-            None,
-        ),
-        media_card(
-            "Breaking Bad",
-            "2008",
-            Some("https://image.tmdb.org/t/p/w600_and_h900_bestv2/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg"),
-            "",
-            None,
-        ),
-    ])
-    .flatten()
-    .take(count)
-    .collect()
-}
-
 async fn login_get(
     HxRequest(hx_request): HxRequest,
     State(state): State<AppState>,
@@ -202,7 +203,7 @@ async fn login_post(
         Ok(user) => {
             tracing::info!("User logged in: {:?}", user);
 
-            let account_id = match get_user_by_google_account_id(&state.db_pool, &user.sub).await {
+            let user_id = match get_user_by_google_account_id(&state.db_pool, &user.sub).await {
                 Ok(user) => user.id,
                 Err(DbError::UserNotFound) => {
                     // TODO: Error handling!
@@ -220,7 +221,7 @@ async fn login_post(
                 Err(_) => todo!(),
             };
 
-            if let Err(e) = session.insert("session", AppSession { account_id }).await {
+            if let Err(e) = session.insert("session", AppSession { user_id }).await {
                 tracing::error!("Failed to store session: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -252,7 +253,7 @@ async fn profile(
     session: AppSession,
 ) -> impl IntoResponse {
     // TODO: Error handling!
-    let user = get_user_by_id(&state.db_pool, session.account_id)
+    let user = get_user_by_id(&state.db_pool, session.user_id)
         .await
         .unwrap();
     maybe_document(
@@ -288,7 +289,7 @@ async fn delete_account(
 
     logout(session).await;
     // TODO: Error handling!
-    delete_user(&state.db_pool, app_session.account_id)
+    delete_user(&state.db_pool, app_session.user_id)
         .await
         .unwrap();
 
