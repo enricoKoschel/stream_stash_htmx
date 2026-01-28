@@ -50,7 +50,7 @@ pub async fn fetch_search_results(
     media_type: MediaType,
     page: i32,
     next_page_url: &str,
-) -> SearchResultCards {
+) -> Result<SearchResultCards, anyhow::Error> {
     match media_type {
         MediaType::Movies => search_movies(tmdb_service, search_term, page, next_page_url).await,
         MediaType::TvShows => search_tv_shows(tmdb_service, search_term, page, next_page_url).await,
@@ -68,19 +68,18 @@ async fn search_movies(
     search_term: &str,
     page: i32,
     next_page_url: &str,
-) -> SearchResultCards {
-    // TODO: Error handling!
-    let result = tmdb_service.search_movies(search_term, page).await.unwrap();
+) -> Result<SearchResultCards, anyhow::Error> {
+    let result = tmdb_service.search_movies(search_term, page).await?;
     let is_last_page = result.page >= result.total_pages;
 
     let cards = map_to_media_cards(tmdb_service, &result.results, is_last_page, next_page_url);
     let shown_results = (result.page - 1) * ITEMS_PER_PAGE + result.results.len() as i32;
 
-    SearchResultCards {
+    Ok(SearchResultCards {
         cards,
         shown_results,
         total_results: result.total_results,
-    }
+    })
 }
 
 async fn search_tv_shows(
@@ -88,22 +87,18 @@ async fn search_tv_shows(
     search_term: &str,
     page: i32,
     next_page_url: &str,
-) -> SearchResultCards {
-    // TODO: Error handling!
-    let result = tmdb_service
-        .search_tv_shows(search_term, page)
-        .await
-        .unwrap();
+) -> Result<SearchResultCards, anyhow::Error> {
+    let result = tmdb_service.search_tv_shows(search_term, page).await?;
     let is_last_page = result.page >= result.total_pages;
 
     let cards = map_to_media_cards(tmdb_service, &result.results, is_last_page, next_page_url);
     let shown_results = (result.page - 1) * ITEMS_PER_PAGE + result.results.len() as i32;
 
-    SearchResultCards {
+    Ok(SearchResultCards {
         cards,
         shown_results,
         total_results: result.total_results,
-    }
+    })
 }
 
 fn map_to_media_cards(

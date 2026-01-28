@@ -89,7 +89,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_http_only(true);
 
     let app_state = AppState {
-        tmdb_service: TmdbService::new(&tmdb_read_access_token),
+        tmdb_service: TmdbService::new(&tmdb_read_access_token)?,
         db_pool,
         google_auth_service: GoogleAuthService::new(google_client_id.clone()),
         google_client_id,

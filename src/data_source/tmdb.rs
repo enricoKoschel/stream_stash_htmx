@@ -58,27 +58,25 @@ pub enum ImageType {
 }
 
 impl TmdbService {
-    pub fn new(tmdb_read_access_token: &str) -> Self {
-        // TODO: Error handling here for all the expects in here?
+    pub fn new(tmdb_read_access_token: &str) -> Result<Self, anyhow::Error> {
         let mut auth_header = HeaderValue::from_str(&format!("Bearer {}", tmdb_read_access_token))
-            .expect("tmdb_read_access_token cannot be parsed into an HTTP header");
+            .map_err(|e| anyhow::anyhow!("Invalid TMDB access token: {}", e))?;
         auth_header.set_sensitive(true);
 
         let mut headers = HeaderMap::new();
         headers.insert(header::AUTHORIZATION, auth_header);
 
-        Self {
-            http_client: Client::builder()
-                .default_headers(headers)
-                .build()
-                .expect("Reqwest client could not be created for TmdbService"),
-            api_base_url: Url::parse("https://api.themoviedb.org/")
-                .expect("URL not parseable, should not happen"),
-            poster_base_url: Url::parse("https://image.tmdb.org/t/p/w600_and_h900_bestv2/")
-                .expect("URL not parseable, should not happen"),
-            backdrop_base_url: Url::parse("https://image.tmdb.org/t/p/w1920_and_h1080_bestv2/")
-                .expect("URL not parseable, should not happen"),
-        }
+        let http_client = Client::builder()
+            .default_headers(headers)
+            .build()
+            .map_err(|e| anyhow::anyhow!("Failed to create HTTP client: {}", e))?;
+
+        Ok(Self {
+            http_client,
+            api_base_url: Url::parse("https://api.themoviedb.org/")?,
+            poster_base_url: Url::parse("https://image.tmdb.org/t/p/w600_and_h900_bestv2/")?,
+            backdrop_base_url: Url::parse("https://image.tmdb.org/t/p/w1920_and_h1080_bestv2/")?,
+        })
     }
 
     pub fn get_image_url(

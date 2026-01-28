@@ -28,28 +28,37 @@ async fn index(
     State(state): State<AppState>,
     session: AppSession,
 ) -> impl IntoResponse {
-    // TODO: Error handling!
-    let media = get_media_by_user_id(&state.db_pool, session.user_id)
-        .await
-        .unwrap();
+    let media = match get_media_by_user_id(&state.db_pool, session.user_id).await {
+        Ok(media) => media,
+        Err(e) => {
+            tracing::error!("Failed to fetch media for user {}: {}", session.user_id, e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to load media").into_response();
+        }
+    };
 
     let mut cards = Vec::with_capacity(media.len());
     for m in &media {
-        let media = match m.r#type {
-            // TODO: Error handling!
-            MediaType::Movies => {
-                Media::Movie(state.tmdb_service.movie_details(m.id as i32).await.unwrap())
-            }
-            MediaType::TvShows => Media::TvShow(
-                state
-                    .tmdb_service
-                    .tv_show_details(m.id as i32)
-                    .await
-                    .unwrap(),
-            ),
+        let media_result = match m.r#type {
+            MediaType::Movies => state
+                .tmdb_service
+                .movie_details(m.id as i32)
+                .await
+                .map(Media::Movie),
+            MediaType::TvShows => state
+                .tmdb_service
+                .tv_show_details(m.id as i32)
+                .await
+                .map(Media::TvShow),
         };
 
-        cards.push(state.tmdb_service.map_media_to_card(&media, None));
+        match media_result {
+            Ok(media) => cards.push(state.tmdb_service.map_media_to_card(&media, None)),
+            Err(e) => {
+                tracing::warn!("Failed to fetch details for media id {}: {}", m.id, e);
+                // Continue loading other media even if one fails
+                continue;
+            }
+        }
     }
 
     maybe_document(
@@ -92,7 +101,11 @@ async fn search(
     uri: Uri,
 ) -> impl IntoResponse {
     if query.q.trim().is_empty() {
-        return StatusCode::BAD_REQUEST.into_response();
+        return (
+            StatusCode::BAD_REQUEST,
+            "Search query 'q' must not be empty",
+        )
+            .into_response();
     }
 
     let uri_str = uri.to_string();
@@ -124,7 +137,14 @@ async fn handle_paginated_search(
 ) -> Response {
     // TODO: Redirect before doing all of this unnecessary work?
     let next_page_url = build_search_url(uri_str, &query.q, query.t, Some(page + 1));
-    let result = fetch_search_results(tmdb_service, &query.q, query.t, page, &next_page_url).await;
+    let result =
+        match fetch_search_results(tmdb_service, &query.q, query.t, page, &next_page_url).await {
+            Ok(result) => result,
+            Err(e) => {
+                tracing::error!("Search failed for query '{}': {}", query.q, e);
+                return (StatusCode::INTERNAL_SERVER_ERROR, "Search failed").into_response();
+            }
+        };
 
     let url_no_page = build_search_url(uri_str, &query.q, query.t, None);
     let card_collection = card_collection(&result.cards, false, true);
@@ -148,7 +168,14 @@ async fn handle_initial_search(
     uri_str: &str,
 ) -> Response {
     let next_page_url = build_search_url(uri_str, &query.q, query.t, Some(2));
-    let result = fetch_search_results(tmdb_service, &query.q, query.t, 1, &next_page_url).await;
+    let result =
+        match fetch_search_results(tmdb_service, &query.q, query.t, 1, &next_page_url).await {
+            Ok(result) => result,
+            Err(e) => {
+                tracing::error!("Search failed for query '{}': {}", query.q, e);
+                return (StatusCode::INTERNAL_SERVER_ERROR, "Search failed").into_response();
+            }
+        };
     maybe_document(
         hx_request,
         google_client_id,
@@ -206,8 +233,7 @@ async fn login_post(
             let user_id = match get_user_by_google_account_id(&state.db_pool, &user.sub).await {
                 Ok(user) => user.id,
                 Err(DbError::UserNotFound) => {
-                    // TODO: Error handling!
-                    create_user(
+                    match create_user(
                         &state.db_pool,
                         Some(&user.sub),
                         user.email.as_deref(),
@@ -215,10 +241,25 @@ async fn login_post(
                         user.picture.as_deref(),
                     )
                     .await
-                    .unwrap()
-                    .id
+                    {
+                        Ok(new_user) => {
+                            tracing::info!("Created new user with id {}", new_user.id);
+                            new_user.id
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to create user: {}", e);
+                            return (
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                                "Failed to create user account",
+                            )
+                                .into_response();
+                        }
+                    }
                 }
-                Err(_) => todo!(),
+                Err(e) => {
+                    tracing::error!("Database error while fetching user: {}", e);
+                    return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+                }
             };
 
             if let Err(e) = session.insert("session", AppSession { user_id }).await {
@@ -252,10 +293,22 @@ async fn profile(
     State(state): State<AppState>,
     session: AppSession,
 ) -> impl IntoResponse {
-    // TODO: Error handling!
-    let user = get_user_by_id(&state.db_pool, session.user_id)
-        .await
-        .unwrap();
+    let user = match get_user_by_id(&state.db_pool, session.user_id).await {
+        Ok(user) => user,
+        Err(e) => {
+            tracing::error!("Failed to fetch user {}: {}", session.user_id, e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to load profile").into_response();
+        }
+    };
+
+    let created_at_str = match user.created_at.format(&Rfc2822) {
+        Ok(formatted) => formatted,
+        Err(e) => {
+            tracing::warn!("Failed to format date: {}", e);
+            "Unknown".to_string()
+        }
+    };
+
     maybe_document(
         hx_request,
         &state.google_client_id,
@@ -264,7 +317,7 @@ async fn profile(
             user.email.as_deref(),
             user.username.as_deref(),
             user.picture_url.as_deref(),
-            &user.created_at.format(&Rfc2822).unwrap(),
+            &created_at_str,
         ),
     )
 }
@@ -287,11 +340,15 @@ async fn delete_account(
         );
     }
 
+    if let Err(e) = delete_user(&state.db_pool, app_session.user_id).await {
+        tracing::error!("Failed to delete user {}: {}", app_session.user_id, e);
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            [("HX-Trigger", "show-account-deletion-failed-modal")],
+        );
+    }
+
     logout(session).await;
-    // TODO: Error handling!
-    delete_user(&state.db_pool, app_session.user_id)
-        .await
-        .unwrap();
 
     (StatusCode::NO_CONTENT, [("HX-Location", "/")])
 }
