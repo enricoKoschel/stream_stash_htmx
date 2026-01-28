@@ -5,9 +5,16 @@ use crate::views::icons::{home_solid, magnifying_glass_solid, x_mark_solid};
 use maud::{Markup, html};
 
 pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
+    // Necessary to avoid double shadow when search result count bar is present
+    let shadow_class = if search_query.is_none() {
+        "shadow-md"
+    } else {
+        ""
+    };
+
     html! {
         // Mobile navbar
-        div class="sm:hidden fixed top-0 w-full z-1 bg-base-200 shadow-md flex justify-between items-center px-2 py-1" {
+        div class={"sm:hidden fixed top-0 w-full z-2 bg-base-200 flex justify-between items-center px-2 py-1 " (shadow_class)} {
             div class="flex-1" {
                 a class="btn btn-square btn-ghost btn-sm" href="/" {
                     (home_solid("size-6"));
@@ -52,7 +59,7 @@ pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
         }
 
         // Desktop navbar
-        div class="hidden sm:flex navbar fixed top-0 z-1 bg-base-200 shadow-md" {
+        div class={"hidden sm:flex navbar fixed top-0 z-2 bg-base-200 " (shadow_class)} {
             div class="flex-1 flex gap-2" {
                 a class="btn btn-square btn-ghost text-xl" href="/" {
                     (home_solid("size-8"));
