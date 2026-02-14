@@ -1,10 +1,9 @@
 use crate::data_source::db::{
-    DbError, create_user, delete_user, get_media_by_user_id, get_user_by_google_account_id,
-    get_user_by_id,
+    create_user, delete_user, get_media_by_user_id, get_user_by_google_account_id, get_user_by_id,
 };
 use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
 use crate::data_source::tmdb::TmdbService;
-use crate::data_source::{Media, MediaType};
+use crate::data_source::{MediaType, TmdbMedia};
 use crate::views::components::{card_collection, search_results_count_bar};
 use crate::views::pages::{
     about_page, login_page, main_page, privacy_page, profile_page, search_page,
@@ -43,12 +42,12 @@ async fn index(
                 .tmdb_service
                 .movie_details(m.id as i32)
                 .await
-                .map(Media::Movie),
+                .map(TmdbMedia::Movie),
             MediaType::TvShows => state
                 .tmdb_service
                 .tv_show_details(m.id as i32)
                 .await
-                .map(Media::TvShow),
+                .map(TmdbMedia::TvShow),
         };
 
         match media_result {
@@ -231,8 +230,8 @@ async fn login_post(
             tracing::info!("User logged in: {:?}", user);
 
             let user_id = match get_user_by_google_account_id(&state.db_pool, &user.sub).await {
-                Ok(user) => user.id,
-                Err(DbError::UserNotFound) => {
+                Ok(Some(user)) => user.id,
+                Ok(None) => {
                     match create_user(
                         &state.db_pool,
                         Some(&user.sub),
@@ -294,7 +293,14 @@ async fn profile(
     session: AppSession,
 ) -> impl IntoResponse {
     let user = match get_user_by_id(&state.db_pool, session.user_id).await {
-        Ok(user) => user,
+        Ok(Some(user)) => user,
+        Ok(None) => {
+            tracing::error!(
+                "Failed to fetch user {}: User does not exist",
+                session.user_id
+            );
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to load profile").into_response();
+        }
         Err(e) => {
             tracing::error!("Failed to fetch user {}: {}", session.user_id, e);
             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to load profile").into_response();

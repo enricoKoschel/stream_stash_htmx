@@ -1,5 +1,5 @@
 use crate::data_source::tmdb::{ITEMS_PER_PAGE, TmdbService};
-use crate::data_source::{Media, MediaType};
+use crate::data_source::{MediaType, TmdbMedia};
 use maud::Markup;
 use serde::Deserialize;
 use url::Url;
@@ -103,7 +103,7 @@ async fn search_tv_shows(
 
 fn map_to_media_cards(
     tmdb_service: &TmdbService,
-    items: &[Media],
+    items: &[TmdbMedia],
     is_last_page: bool,
     next_page_url: &str,
 ) -> Vec<Markup> {

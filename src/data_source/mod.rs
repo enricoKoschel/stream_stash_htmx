@@ -22,58 +22,64 @@ pub const MEDIA_STATES_TV_SHOW: [MediaState; 5] = [
 ];
 
 #[derive(Debug)]
-pub enum Media {
+pub struct Media {
+    pub tmdb_media: TmdbMedia,
+    pub state: Option<MediaState>,
+}
+
+#[derive(Debug)]
+pub enum TmdbMedia {
     Movie(tmdb::Movie),
     TvShow(tmdb::TvShow),
 }
 
-impl Media {
+impl TmdbMedia {
     pub fn id(&self) -> i32 {
         match self {
-            Media::Movie(movie) => movie.id,
-            Media::TvShow(tv_show) => tv_show.id,
+            Self::Movie(movie) => movie.id,
+            Self::TvShow(tv_show) => tv_show.id,
         }
     }
 
     pub fn r#type(&self) -> MediaType {
         match self {
-            Media::Movie(_) => MediaType::Movies,
-            Media::TvShow(_) => MediaType::TvShows,
+            Self::Movie(_) => MediaType::Movies,
+            Self::TvShow(_) => MediaType::TvShows,
         }
     }
 
     pub fn title(&self) -> Option<&str> {
         match self {
-            Media::Movie(movie) => movie.title.as_deref(),
-            Media::TvShow(tv_show) => tv_show.name.as_deref(),
+            Self::Movie(movie) => movie.title.as_deref(),
+            Self::TvShow(tv_show) => tv_show.name.as_deref(),
         }
     }
 
     pub fn overview(&self) -> Option<&str> {
         match self {
-            Media::Movie(movie) => movie.overview.as_deref(),
-            Media::TvShow(tv_show) => tv_show.overview.as_deref(),
+            Self::Movie(movie) => movie.overview.as_deref(),
+            Self::TvShow(tv_show) => tv_show.overview.as_deref(),
         }
     }
 
     pub fn release_date(&self) -> Option<&str> {
         match self {
-            Media::Movie(movie) => movie.release_date.as_deref(),
-            Media::TvShow(tv_show) => tv_show.first_air_date.as_deref(),
+            Self::Movie(movie) => movie.release_date.as_deref(),
+            Self::TvShow(tv_show) => tv_show.first_air_date.as_deref(),
         }
     }
 
     pub fn poster_path(&self) -> Option<&str> {
         match self {
-            Media::Movie(movie) => movie.poster_path.as_deref(),
-            Media::TvShow(tv_show) => tv_show.poster_path.as_deref(),
+            Self::Movie(movie) => movie.poster_path.as_deref(),
+            Self::TvShow(tv_show) => tv_show.poster_path.as_deref(),
         }
     }
 
     pub fn backdrop_path(&self) -> Option<&str> {
         match self {
-            Media::Movie(movie) => movie.backdrop_path.as_deref(),
-            Media::TvShow(tv_show) => tv_show.backdrop_path.as_deref(),
+            Self::Movie(movie) => movie.backdrop_path.as_deref(),
+            Self::TvShow(tv_show) => tv_show.backdrop_path.as_deref(),
         }
     }
 }

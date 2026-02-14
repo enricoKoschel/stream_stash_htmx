@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use url::{ParseError, Url};
 
 use crate::{
-    data_source::{MEDIA_STATES_TV_SHOW, Media},
+    data_source::{MEDIA_STATES_MOVIE, MEDIA_STATES_TV_SHOW, Media, TmdbMedia},
     views::{components::media_card, pages::media_page},
 };
 
@@ -48,7 +48,7 @@ pub struct SearchResult {
     pub page: i32,
     pub total_pages: i32,
     pub total_results: i32,
-    pub results: Vec<Media>,
+    pub results: Vec<TmdbMedia>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -141,7 +141,7 @@ impl TmdbService {
             page: response.page,
             total_pages: response.total_pages,
             total_results: response.total_results,
-            results: response.results.into_iter().map(Media::Movie).collect(),
+            results: response.results.into_iter().map(TmdbMedia::Movie).collect(),
         })
     }
 
@@ -192,7 +192,11 @@ impl TmdbService {
             page: response.page,
             total_pages: response.total_pages,
             total_results: response.total_results,
-            results: response.results.into_iter().map(Media::TvShow).collect(),
+            results: response
+                .results
+                .into_iter()
+                .map(TmdbMedia::TvShow)
+                .collect(),
         })
     }
 
@@ -241,7 +245,7 @@ impl TmdbService {
             .map(String::from)
     }
 
-    pub fn map_media_to_card(&self, media: &Media, load_more_url: Option<&str>) -> Markup {
+    pub fn map_media_to_card(&self, media: &TmdbMedia, load_more_url: Option<&str>) -> Markup {
         let title = Self::get_string_or_default(media.title(), "????");
         let year = media
             .release_date()
@@ -261,24 +265,30 @@ impl TmdbService {
     }
 
     pub fn map_media_to_page(&self, media: &Media) -> Markup {
-        let title = Self::get_string_or_default(media.title(), "????");
-        let overview = Self::get_string_or_default(media.overview(), "");
-        let release_date = Self::get_string_or_default(media.release_date(), "????-??-??");
-        let poster_url = self.get_image_url_string(media.poster_path(), ImageType::Poster);
-        let backdrop_url = self.get_image_url_string(media.backdrop_path(), ImageType::Backdrop);
+        let title = Self::get_string_or_default(media.tmdb_media.title(), "????");
+        let overview = Self::get_string_or_default(media.tmdb_media.overview(), "");
+        let release_date =
+            Self::get_string_or_default(media.tmdb_media.release_date(), "????-??-??");
+        let poster_url =
+            self.get_image_url_string(media.tmdb_media.poster_path(), ImageType::Poster);
+        let backdrop_url =
+            self.get_image_url_string(media.tmdb_media.backdrop_path(), ImageType::Backdrop);
 
-        // TODO: Actual type and states
-        let states: Vec<String> = MEDIA_STATES_TV_SHOW
-            .into_iter()
-            .map(|s| s.to_string())
-            .collect();
+        let states: Vec<String> = match media.tmdb_media {
+            TmdbMedia::Movie(_) => &MEDIA_STATES_MOVIE[..],
+            TmdbMedia::TvShow(_) => &MEDIA_STATES_TV_SHOW[..],
+        }
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+
         media_page(
             title,
             overview,
             release_date,
             poster_url.as_deref(),
             backdrop_url.as_deref(),
-            Some("Waiting"),
+            media.state.map(|s| s.to_string()).as_deref(),
             &states.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
         )
     }
