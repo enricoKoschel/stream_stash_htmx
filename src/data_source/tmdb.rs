@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use url::{ParseError, Url};
 
 use crate::{
-    data_source::Media,
+    data_source::{MEDIA_STATES_TV_SHOW, Media},
     views::{components::media_card, pages::media_page},
 };
 
@@ -267,12 +267,19 @@ impl TmdbService {
         let poster_url = self.get_image_url_string(media.poster_path(), ImageType::Poster);
         let backdrop_url = self.get_image_url_string(media.backdrop_path(), ImageType::Backdrop);
 
+        // TODO: Actual type and states
+        let states: Vec<String> = MEDIA_STATES_TV_SHOW
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect();
         media_page(
             title,
             overview,
             release_date,
             poster_url.as_deref(),
             backdrop_url.as_deref(),
+            Some("Waiting"),
+            &states.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
         )
     }
 }

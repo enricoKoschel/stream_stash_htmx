@@ -8,6 +8,19 @@ pub mod tmdb;
 
 pub const MEDIA_TYPES: [MediaType; 2] = [MediaType::Movies, MediaType::TvShows];
 
+pub const MEDIA_STATES_MOVIE: [MediaState; 3] = [
+    MediaState::Finished,
+    MediaState::Planned,
+    MediaState::Dropped,
+];
+pub const MEDIA_STATES_TV_SHOW: [MediaState; 5] = [
+    MediaState::Finished,
+    MediaState::InProgress,
+    MediaState::Planned,
+    MediaState::Waiting,
+    MediaState::Dropped,
+];
+
 #[derive(Debug)]
 pub enum Media {
     Movie(tmdb::Movie),
@@ -91,9 +104,21 @@ impl Display for MediaType {
 
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize, sqlx::Type)]
 pub enum MediaState {
-    Done,
+    Finished,
     InProgress,
-    Todo,
+    Planned,
     Waiting,
     Dropped,
+}
+
+impl Display for MediaState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Finished => write!(f, "Finished"),
+            Self::InProgress => write!(f, "In progress"),
+            Self::Planned => write!(f, "Planned"),
+            Self::Waiting => write!(f, "Waiting"),
+            Self::Dropped => write!(f, "Dropped"),
+        }
+    }
 }
