@@ -1,7 +1,7 @@
 mod about_page;
 mod login_page;
 mod main_page;
-mod media_page;
+pub mod media_page;
 mod privacy_page;
 mod profile_page;
 mod search_page;

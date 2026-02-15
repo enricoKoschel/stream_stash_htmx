@@ -89,7 +89,7 @@ WHERE id = ?"#,
 
 // TODO: Delete all data from this user from all data tables
 pub async fn delete_user(pool: &SqlitePool, id: i64) -> Result<(), DbError> {
-    match query!(
+    query!(
         r#"
 DELETE FROM media
 WHERE user_id = ?"#,
@@ -97,12 +97,9 @@ WHERE user_id = ?"#,
     )
     .execute(pool)
     .await
-    {
-        Ok(_) => Ok(()),
-        Err(e) => Err(DbError::QueryError(e)),
-    }?;
+    .map_err(DbError::QueryError)?;
 
-    match query!(
+    query!(
         r#"
         DELETE FROM users
         WHERE id = ?"#,
@@ -110,10 +107,8 @@ WHERE user_id = ?"#,
     )
     .execute(pool)
     .await
-    {
-        Ok(_) => Ok(()),
-        Err(e) => Err(DbError::QueryError(e)),
-    }
+    .map(|_| ())
+    .map_err(DbError::QueryError)
 }
 
 #[derive(Debug)]
@@ -155,5 +150,70 @@ WHERE type = ? AND id = ? AND user_id = ?"#,
     )
     .fetch_optional(pool)
     .await
+    .map_err(DbError::QueryError)
+}
+
+pub async fn add_media_for_user(
+    pool: &SqlitePool,
+    media_type: MediaType,
+    media_id: i64,
+    user_id: i64,
+) -> Result<Media, DbError> {
+    query_as!(
+        Media,
+        r#"
+INSERT OR REPLACE INTO media (type, id, user_id, state)
+VALUES (?, ?, ?, ?)
+RETURNING id, type as "type: MediaType", state as "state: MediaState""#,
+        media_type,
+        media_id,
+        user_id,
+        MediaState::Planned,
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(DbError::QueryError)
+}
+
+pub async fn delete_media_for_user(
+    pool: &SqlitePool,
+    media_type: MediaType,
+    media_id: i64,
+    user_id: i64,
+) -> Result<(), DbError> {
+    query!(
+        r#"
+DELETE FROM media
+WHERE type = ? AND id = ? AND user_id = ?"#,
+        media_type,
+        media_id,
+        user_id,
+    )
+    .execute(pool)
+    .await
+    .map(|_| ())
+    .map_err(DbError::QueryError)
+}
+
+pub async fn update_media_state_for_user(
+    pool: &SqlitePool,
+    media_state: MediaState,
+    media_type: MediaType,
+    media_id: i64,
+    user_id: i64,
+) -> Result<bool, DbError> {
+    query!(
+        r#"
+UPDATE media
+SET state = ?
+WHERE type = ? AND id = ? AND user_id = ?"#,
+        media_state,
+        media_type,
+        media_id,
+        user_id,
+    )
+    .execute(pool)
+    .await
+    .map(|r| r.rows_affected() > 0)
     .map_err(DbError::QueryError)
 }

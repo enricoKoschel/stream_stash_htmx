@@ -111,6 +111,7 @@ impl Display for MediaType {
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize, sqlx::Type)]
 pub enum MediaState {
     Finished,
+    #[serde(alias = "In progress")]
     InProgress,
     Planned,
     Waiting,

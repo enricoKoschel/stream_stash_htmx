@@ -1,8 +1,22 @@
 use crate::data_source::MEDIA_TYPES;
 use crate::data_source::search::SearchQuery;
-use crate::views::components::navbar_dropdown;
-use crate::views::icons::{home_solid, magnifying_glass_solid, x_mark_solid};
+use crate::views::icons::{bars_3_solid, home_solid, magnifying_glass_solid, x_mark_solid};
 use maud::{Markup, html};
+
+fn dropdown(button_class: &str, button_size: &str) -> Markup {
+    html! {
+        details class="dropdown dropdown-end" {
+            summary class={ "btn btn-square btn-ghost " (button_class) } {
+                (bars_3_solid(button_size));
+            }
+            ul class="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm sm:text-lg" {
+                li { a href="/profile" { "Profile"; } }
+                div class="divider m-0 px-2" {}
+                li { a href="/logout" { "Logout"; } }
+            }
+        }
+    }
+}
 
 pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
     // Necessary to avoid double shadow when search result count bar is present
@@ -27,7 +41,7 @@ pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
                 button class="btn btn-square btn-ghost btn-sm" onclick="document.getElementById('mobile-search-modal').showModal()" {
                     (magnifying_glass_solid("size-6"));
                 }
-                (navbar_dropdown("btn-sm", "size-6"));
+                (dropdown("btn-sm", "size-6"));
             }
         }
 
@@ -80,7 +94,7 @@ pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
                 input class="btn btn-primary btn-soft" type="submit" value="Search";
             }
             div class="flex-1 flex justify-end" {
-                (navbar_dropdown("btn-md", "size-8"));
+                (dropdown("btn-md", "size-8"));
             }
         }
     }

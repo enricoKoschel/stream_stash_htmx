@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use url::{ParseError, Url};
 
 use crate::{
-    data_source::{MEDIA_STATES_MOVIE, MEDIA_STATES_TV_SHOW, Media, TmdbMedia},
+    data_source::{MEDIA_STATES_MOVIE, MEDIA_STATES_TV_SHOW, Media, MediaType, TmdbMedia},
     views::{components::media_card, pages::media_page},
 };
 
@@ -274,9 +274,9 @@ impl TmdbService {
         let backdrop_url =
             self.get_image_url_string(media.tmdb_media.backdrop_path(), ImageType::Backdrop);
 
-        let states: Vec<String> = match media.tmdb_media {
-            TmdbMedia::Movie(_) => &MEDIA_STATES_MOVIE[..],
-            TmdbMedia::TvShow(_) => &MEDIA_STATES_TV_SHOW[..],
+        let states: Vec<_> = match media.tmdb_media.r#type() {
+            MediaType::Movies => &MEDIA_STATES_MOVIE[..],
+            MediaType::TvShows => &MEDIA_STATES_TV_SHOW[..],
         }
         .iter()
         .map(|s| s.to_string())
@@ -290,6 +290,11 @@ impl TmdbService {
             backdrop_url.as_deref(),
             media.state.map(|s| s.to_string()).as_deref(),
             &states.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
+            &format!(
+                "/media/{}/{}",
+                media.tmdb_media.r#type(),
+                media.tmdb_media.id()
+            ),
         )
     }
 }

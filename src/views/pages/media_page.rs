@@ -3,6 +3,34 @@ use crate::views::layouts::main_layout;
 use crate::views::{components::image_with_fallback, icons::calendar_solid};
 use maud::{Markup, html};
 
+pub fn watch_state_dropdown(state: &str, states: &[&str], media_url: &str) -> Markup {
+    html! {
+        form id="watch-state-dropdown" class="flex gap-2 w-full" hx-patch=(media_url) hx-swap="outerHTML" hx-trigger="change" {
+            select name="state" class="flex-1 select select-md sm:select-lg outline-0" {
+                @for &media_state in states {
+                    option selected[state == media_state] { (media_state); }
+                }
+            }
+
+            button class="btn btn-error btn-square btn-md sm:btn-lg" type="reset" onclick="document.getElementById('confirm-delete-media-modal').showModal()" {
+                (trash_solid("size-6 sm:size-8"));
+            }
+        }
+    }
+}
+
+pub fn add_media_to_list_button(media_url: &str) -> Markup {
+    html! {
+        button class="btn btn-primary w-full" hx-put=(media_url) hx-swap="outerHTML" {
+            (plus_solid("size-6 sm:size-8 stroke-white"));
+            p class="text-base sm:text-lg" { "Add to list"; }
+            // Dummy for visual alignment
+            div class="size-2" {}
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
 // TODO: Media item as struct?
 pub fn media_page(
     title: &str,
@@ -12,6 +40,7 @@ pub fn media_page(
     backdrop_url: Option<&str>,
     state: Option<&str>,
     states: &[&str],
+    media_url: &str,
 ) -> Markup {
     main_layout(html! {
         // top-* for navbar
@@ -22,24 +51,9 @@ pub fn media_page(
                 (image_with_fallback("w-48 sm:w-56 md:w-64 lg:w-72 rounded-lg shadow-2xl ring-1 ring-white/10", "aspect-2/3", poster_url));
 
                 @if let Some(state) = state {
-                    div class="flex gap-2 w-full" {
-                        select class="flex-1 select select-md sm:select-lg outline-0" {
-                            @for &media_state in states {
-                                option selected[state == media_state] { (media_state); }
-                            }
-                        }
-
-                        button class="btn btn-error btn-square btn-md sm:btn-lg" onclick="document.getElementById('confirm-delete-media-modal').showModal()" {
-                            (trash_solid("size-6 sm:size-8"));
-                        }
-                    }
+                    (watch_state_dropdown(state, states, media_url));
                 } @else {
-                    button class="btn btn-primary w-full" {
-                        (plus_solid("size-6 sm:size-8 stroke-white"));
-                        p class="text-base sm:text-lg" { "Add to list"; }
-                        // Dummy for visual alignment
-                        div class="size-2" {}
-                    }
+                    (add_media_to_list_button(media_url));
                 }
             }
 
@@ -77,8 +91,7 @@ pub fn media_page(
                     button class="flex-1 btn btn-primary" onclick="document.getElementById('confirm-delete-media-modal').close()" {
                         "Cancel";
                     }
-                    // TODO: Actually delete
-                    button class="flex-1 btn btn-error" onclick="document.getElementById('confirm-delete-media-modal').close()" {
+                    button class="flex-1 btn btn-error" onclick="document.getElementById('confirm-delete-media-modal').close()" hx-delete=(media_url) hx-target="#watch-state-dropdown" hx-swap="outerHTML" {
                         "Confirm";
                     }
                 }
