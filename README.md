@@ -33,6 +33,7 @@ Click [here](https://developer.themoviedb.org/docs/getting-started) for instruct
 - Create a `.env` file in the same directory as the `Cargo.toml` file with the following contents:
 
 TODO: Add ip, port, log level
+
 ```toml
 TMDB_READ_ACCESS_TOKEN="" # Your TMDB API Read Access Token
 DATABASE_URL="" # URL to the Stream Stash DB (e.g.: "sqlite:stream_stash.db")
@@ -100,3 +101,4 @@ cargo fmt
 - Backend
   - [Rust](https://rust-lang.org/)
   - [Maud](https://github.com/lambda-fairy/maud)
+  - [SQLite](https://sqlite.org/)
