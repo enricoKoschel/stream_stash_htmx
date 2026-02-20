@@ -10,12 +10,12 @@ use crate::views::pages::{
     about_page, login_page, main_page, privacy_page, profile_page, search_page,
 };
 use crate::views::{maybe_document, maybe_redirect};
-use crate::{AppSession, AppState};
+use crate::{AppSession, AppState, MaybeAppSession};
 use axum::Form;
 use axum::Router;
 use axum::extract::{Query, State};
 use axum::http::{StatusCode, Uri};
-use axum::response::{IntoResponse, Response};
+use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum_cookie::CookieManager;
 use axum_htmx::HxRequest;
@@ -188,7 +188,13 @@ async fn handle_initial_search(
 async fn login_get(
     HxRequest(hx_request): HxRequest,
     State(state): State<AppState>,
+    session: MaybeAppSession,
 ) -> impl IntoResponse {
+    // Redirect to / if already logged in
+    if session.0.is_some() {
+        return Redirect::to("/").into_response();
+    }
+
     maybe_document(
         hx_request,
         &state.google_client_id,
@@ -276,12 +282,11 @@ async fn login_post(
     }
 }
 
-// TODO: If not logged in, don't logout
 async fn logout(session: Session) -> impl IntoResponse {
     if let Err(e) = session.delete().await {
         tracing::error!("Failed to delete session: {}", e);
     }
-    axum::response::Redirect::to("/login")
+    Redirect::to("/login")
 }
 
 async fn profile(

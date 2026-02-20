@@ -46,6 +46,27 @@ where
     }
 }
 
+// Necessary to avoid the orphan rule
+pub struct MaybeAppSession(pub Option<AppSession>);
+
+impl<S> FromRequestParts<S> for MaybeAppSession
+where
+    S: Send + Sync,
+{
+    type Rejection = std::convert::Infallible;
+
+    async fn from_request_parts(req: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let session = Session::from_request_parts(req, state).await.ok();
+
+        let app_session = match session {
+            Some(session) => session.get("session").await.ok().flatten(),
+            None => None,
+        };
+
+        Ok(MaybeAppSession(app_session))
+    }
+}
+
 #[derive(Clone)]
 struct AppState {
     tmdb_service: TmdbService,
