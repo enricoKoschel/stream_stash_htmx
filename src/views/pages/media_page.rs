@@ -12,7 +12,7 @@ pub fn watch_state_dropdown(state: &str, states: &[&str], media_url: &str) -> Ma
                 }
             }
 
-            button class="btn btn-error btn-square btn-md sm:btn-lg" type="reset" onclick="document.getElementById('confirm-delete-media-modal').showModal()" {
+            button class="btn btn-error btn-square btn-md sm:btn-lg" type="button" onclick="document.getElementById('confirm-delete-media-modal').showModal()" {
                 (trash_solid("size-6 sm:size-8"));
             }
         }

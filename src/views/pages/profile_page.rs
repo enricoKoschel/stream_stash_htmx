@@ -40,10 +40,7 @@ pub fn profile_page(
                     p { "THIS ACTION CANNOT BE UNDONE!"; }
                     p { "Type DELETE to confirm."; }
                 }
-                form class="flex flex-col gap-2" hx-post="/deleteAccount"
-                    hx-on:show-account-not-deleted-modal="document.getElementById('account-not-deleted-modal').showModal()"
-                    hx-on:show-account-deletion-failed-modal="document.getElementById('account-deletion-failed-modal').showModal()"
-                {
+                form class="flex flex-col gap-2" hx-post="/deleteAccount" hx-on:show-account-not-deleted-modal="document.getElementById('account-not-deleted-modal').showModal()" {
                     input id="confirm-delete-input" class="input outline-0 w-full" name="confirm" type="text" placeholder="DELETE";
                     div class="flex gap-2 w-full" {
                         div class="flex-2 hidden sm:block" {}
@@ -69,22 +66,6 @@ pub fn profile_page(
                     "Your account was NOT deleted!";
                 }
                 button class="btn btn-primary" onclick="document.getElementById('account-not-deleted-modal').close()" {
-                    "Okay";
-                }
-            }
-            // Hidden form, closes the dialog when pressing outside it
-            form method="dialog" class="modal-backdrop" {
-                button {}
-            }
-        }
-
-        // Account deletion failed modal
-        dialog id="account-deletion-failed-modal" class="modal" {
-            div class="modal-box flex flex-col gap-8" {
-                p class="text-xl sm:text-2xl" {
-                    "There was an error while trying to delete your account. Please try again.";
-                }
-                button class="btn btn-primary" onclick="document.getElementById('account-deletion-failed-modal').close()" {
                     "Okay";
                 }
             }

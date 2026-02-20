@@ -51,7 +51,7 @@ pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
                 div class="flex justify-between" {
                     h3 class="font-bold text-lg" { "Search"; }
                     form method="dialog" {
-                        button class="btn btn-square btn-ghost btn-sm " {
+                        button class="btn btn-square btn-ghost btn-sm" {
                             (x_mark_solid("size-6"));
                         }
                     }

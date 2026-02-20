@@ -101,11 +101,7 @@ async fn search(
     uri: Uri,
 ) -> impl IntoResponse {
     if query.q.trim().is_empty() {
-        return (
-            StatusCode::BAD_REQUEST,
-            "Search query 'q' must not be empty",
-        )
-            .into_response();
+        return StatusCode::NO_CONTENT.into_response();
     }
 
     let uri_str = uri.to_string();
@@ -344,20 +340,22 @@ async fn delete_account(
         return (
             StatusCode::NO_CONTENT,
             [("HX-Trigger", "show-account-not-deleted-modal")],
-        );
+        )
+            .into_response();
     }
 
     if let Err(e) = delete_user(&state.db_pool, app_session.user_id).await {
         tracing::error!("Failed to delete user {}: {}", app_session.user_id, e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            [("HX-Trigger", "show-account-deletion-failed-modal")],
-        );
+            "There was an error while trying to delete your account. Please try again.",
+        )
+            .into_response();
     }
 
     logout(session).await;
 
-    (StatusCode::NO_CONTENT, [("HX-Location", "/")])
+    (StatusCode::NO_CONTENT, [("HX-Location", "/")]).into_response()
 }
 
 pub fn index_router() -> Router<AppState> {
