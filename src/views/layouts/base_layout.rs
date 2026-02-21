@@ -39,7 +39,7 @@ pub fn base_layout(
                 // Otherwise a red background appears while loading
                 script src="https://accounts.google.com/gsi/client" {}
             }
-            body hx-boost="true" {
+            body hx-boost="true" hx-target="#main-content" {
                 div id="g_id_onload" class="hidden"
                     data-client_id=(google_client_id)
                     data-context="signin"
@@ -50,7 +50,7 @@ pub fn base_layout(
                 noscript class="text-6xl flex justify-center items-center w-screen h-screen text-center" {
                     "This site requires JavaScript to function. Please enable JavaScript in your browser settings.";
                 }
-                div class="noscript:hidden" {
+                div id="main-content" class="noscript:hidden" {
                     (children);
                 }
 

@@ -56,7 +56,7 @@ pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
                         }
                     }
                 }
-                form class="flex flex-col gap-2" hx-get="/search" hx-target="body" hx-push-url="true" {
+                form class="flex flex-col gap-2" hx-get="/search" hx-push-url="true" {
                     input class="input w-full outline-0" name="q" type="text" placeholder="Search..." value=[search_query.map(|s| &s.q)];
                     select class="select w-full cursor-pointer outline-0" name="t" {
                         @for media_type in MEDIA_TYPES {
@@ -81,7 +81,7 @@ pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
                 img class="hidden lg:block w-[min(20vw,24rem)]" src="/static/logos/StreamStashWithTextWhite.svg";
                 img class="w-8 hidden max-lg:block" src="/static/logos/StreamStashNoText.svg";
             }
-            form class="flex-1 flex gap-2 justify-center" hx-get="/search" hx-target="body" hx-push-url="true" {
+            form class="flex-1 flex gap-2 justify-center" hx-get="/search" hx-push-url="true" {
                 div class="flex-1 flex join" {
                     input class="flex-1 input outline-0 min-w-60 join-item" name="q" type="text" placeholder="Search" value=[search_query.map(|s| &s.q)];
                     select class="select outline-0 w-26 cursor-pointer join-item" name="t" {

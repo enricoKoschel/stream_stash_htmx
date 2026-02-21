@@ -5,7 +5,7 @@ use maud::{Markup, html};
 
 pub fn watch_state_dropdown(state: &str, states: &[&str], media_url: &str) -> Markup {
     html! {
-        form id="watch-state-dropdown" class="flex gap-2 w-full" hx-patch=(media_url) hx-swap="outerHTML" hx-trigger="change" {
+        form id="watch-state-dropdown" class="flex gap-2 w-full" hx-patch=(media_url) hx-trigger="change" {
             select name="state" class="flex-1 select select-md sm:select-lg outline-0" {
                 @for &media_state in states {
                     option selected[state == media_state] { (media_state); }
@@ -21,7 +21,7 @@ pub fn watch_state_dropdown(state: &str, states: &[&str], media_url: &str) -> Ma
 
 pub fn add_media_to_list_button(media_url: &str) -> Markup {
     html! {
-        button class="btn btn-primary w-full" hx-put=(media_url) hx-swap="outerHTML" {
+        button class="btn btn-primary w-full" hx-put=(media_url) hx-target="this" hx-swap="outerHTML" {
             (plus_solid("size-6 sm:size-8 stroke-white"));
             p class="text-base sm:text-lg" { "Add to list"; }
             // Dummy for visual alignment
