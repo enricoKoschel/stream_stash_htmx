@@ -1,7 +1,22 @@
 use crate::views::components::error_modal;
 use maud::{DOCTYPE, Markup, html};
 
-pub fn base_layout(google_client_id: &str, login_redirect_url: &str, children: Markup) -> Markup {
+pub fn page_title(title: Option<&str>) -> Markup {
+    html! {
+        @if let Some(title) = title {
+            title { (title) " - Stream Stash"; }
+        } @else {
+            title { "Stream Stash"; }
+        }
+    }
+}
+
+pub fn base_layout(
+    title: Option<&str>,
+    google_client_id: &str,
+    login_redirect_url: &str,
+    children: Markup,
+) -> Markup {
     html! {
         (DOCTYPE);
         html {
@@ -18,7 +33,7 @@ pub fn base_layout(google_client_id: &str, login_redirect_url: &str, children: M
                 link rel="icon" type="image/svg" href="/static/logos/StreamStashNoText.svg";
                 link rel="icon" type="image/ico" href="/static/favicon.ico";
 
-                title { "Stream Stash" }
+                (page_title(title));
 
                 // Has to be at the bottom and whithout async or defer
                 // Otherwise a red background appears while loading

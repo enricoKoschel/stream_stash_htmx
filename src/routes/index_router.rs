@@ -63,6 +63,7 @@ async fn index(
 
     maybe_document(
         hx_request,
+        None,
         &state.google_client_id,
         state.login_url,
         main_page(&cards),
@@ -75,6 +76,7 @@ async fn about(
 ) -> impl IntoResponse {
     maybe_document(
         hx_request,
+        Some("About"),
         &state.google_client_id,
         state.login_url,
         about_page(),
@@ -87,6 +89,7 @@ async fn privacy(
 ) -> impl IntoResponse {
     maybe_document(
         hx_request,
+        Some("Privacy Policy"),
         &state.google_client_id,
         state.login_url,
         privacy_page(),
@@ -174,6 +177,7 @@ async fn handle_initial_search(
         };
     maybe_document(
         hx_request,
+        Some(&query.q),
         google_client_id,
         login_url,
         search_page(
@@ -197,6 +201,7 @@ async fn login_get(
 
     maybe_document(
         hx_request,
+        Some("Login"),
         &state.google_client_id,
         state.login_url,
         login_page(),
@@ -319,6 +324,7 @@ async fn profile(
 
     maybe_document(
         hx_request,
+        Some("Profile"),
         &state.google_client_id,
         state.login_url,
         profile_page(

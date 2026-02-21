@@ -246,7 +246,7 @@ impl TmdbService {
     }
 
     pub fn map_media_to_card(&self, media: &TmdbMedia, load_more_url: Option<&str>) -> Markup {
-        let title = Self::get_string_or_default(media.title(), "????");
+        let title = &media.sanitized_title();
         let year = media
             .release_date()
             .filter(|d| d.trim().len() >= 4)
@@ -265,7 +265,7 @@ impl TmdbService {
     }
 
     pub fn map_media_to_page(&self, media: &Media) -> Markup {
-        let title = Self::get_string_or_default(media.tmdb_media.title(), "????");
+        let title = &media.tmdb_media.sanitized_title();
         let overview = Self::get_string_or_default(media.tmdb_media.overview(), "");
         let release_date =
             Self::get_string_or_default(media.tmdb_media.release_date(), "????-??-??");

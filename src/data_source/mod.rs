@@ -55,6 +55,13 @@ impl TmdbMedia {
         }
     }
 
+    pub fn sanitized_title(&self) -> String {
+        self.title()
+            .filter(|s| !s.trim().is_empty())
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| format!("{} {}", self.r#type(), self.id()))
+    }
+
     pub fn overview(&self) -> Option<&str> {
         match self {
             Self::Movie(movie) => movie.overview.as_deref(),

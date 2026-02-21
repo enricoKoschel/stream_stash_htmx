@@ -1,4 +1,4 @@
-mod base_layout;
+pub mod base_layout;
 mod logged_out_layout;
 mod main_layout;
 pub mod search_layout;
