@@ -314,7 +314,7 @@ async fn profile(
         }
     };
 
-    let created_at_str = match user.created_at.format(&Rfc2822) {
+    let created_at_str = match user.created_at.assume_utc().format(&Rfc2822) {
         Ok(formatted) => formatted,
         Err(e) => {
             tracing::warn!("Failed to format date: {}", e);

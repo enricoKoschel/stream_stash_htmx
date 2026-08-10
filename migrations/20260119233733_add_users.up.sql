@@ -4,5 +4,5 @@ CREATE TABLE users (
     email TEXT,
     username TEXT,
     picture_url TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
