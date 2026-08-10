@@ -35,7 +35,7 @@ pub fn base_layout(
 
                 (page_title(title));
 
-                // Has to be at the bottom and whithout async or defer
+                // Has to be at the bottom and without async or defer
                 // Otherwise a red background appears while loading
                 script src="https://accounts.google.com/gsi/client" {}
             }
