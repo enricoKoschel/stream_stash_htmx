@@ -1,6 +1,5 @@
 layout {
     tab name="Dev" {
-        tab-bar size=1
         pane split_direction="vertical" {
             pane size="80%" command="nvim" {
                 args "."
@@ -15,16 +14,16 @@ layout {
                 pane
             }
         }
-        status-bar size=1
     }
     tab name="Copilot" {
-        tab-bar size=1
         pane command="copilot"
-        status-bar size=1
     }
     tab name="Sqlit" {
-        tab-bar size=1
         pane command="sqlit"
+    }
+    default_tab_template {
+        tab-bar size=1
+        children
         status-bar size=1
     }
     pane_template name="tab-bar" {
