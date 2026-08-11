@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo:rustc-env=GIT_HASH={}", git_hash);
 
     println!("cargo:rerun-if-changed={TAILWIND_CSS_FILE}");
-    println!("cargo:rerun-if-changed=src/views/");
+    println!("cargo:rerun-if-changed=src/");
 
     let output = Command::new(TAILWIND_CSS_CLI)
         .args([
