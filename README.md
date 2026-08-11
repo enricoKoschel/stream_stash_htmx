@@ -53,13 +53,13 @@ cargo install sqlx-cli
 #### Create local DB
 
 ```bash
-sqlx database create
+cargo sqlx database create
 ```
 
 #### Run migrations
 
 ```bash
-sqlx migrate run
+cargo sqlx migrate run
 ```
 
 ### Install cargo watch (optional, but recommended)
