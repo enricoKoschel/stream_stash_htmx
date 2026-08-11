@@ -1,5 +1,5 @@
 use std::{error::Error, process::Command};
-use time::{OffsetDateTime, format_description};
+use time::{OffsetDateTime, format_description::well_known::Rfc2822};
 
 const TAILWIND_CSS_CLI: &str = "./tailwind/tailwindcss";
 const TAILWIND_CSS_FILE: &str = "./tailwind/tailwind.css";
@@ -7,8 +7,7 @@ const TAILWIND_CSS_FILE: &str = "./tailwind/tailwind.css";
 fn main() -> Result<(), Box<dyn Error>> {
     // Set build timestamp
     let now = OffsetDateTime::now_utc();
-    let format = format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second] UTC")?;
-    let timestamp = now.format(&format)?;
+    let timestamp = now.format(&Rfc2822)?;
     println!("cargo:rustc-env=BUILD_TIMESTAMP={}", timestamp);
 
     // Set git commit hash
