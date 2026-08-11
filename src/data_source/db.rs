@@ -1,8 +1,8 @@
-use crate::data_source::{MediaState, MediaType};
+use crate::data_source::{DateValidity, MediaState, MediaType};
 use serde::Deserialize;
 use sqlx::{SqlitePool, query, query_as};
 use thiserror::Error;
-use time::PrimitiveDateTime;
+use time::{Date, PrimitiveDateTime};
 
 #[derive(Debug, Error)]
 pub enum DbError {
@@ -87,8 +87,17 @@ WHERE id = ?"#,
     .map_err(DbError::QueryError)
 }
 
-// TODO: Delete all data from this user from all data tables
 pub async fn delete_user(pool: &SqlitePool, id: i64) -> Result<(), DbError> {
+    query!(
+        r#"
+DELETE FROM media_history_entries
+WHERE user_id = ?"#,
+        id,
+    )
+    .execute(pool)
+    .await
+    .map_err(DbError::QueryError)?;
+
     query!(
         r#"
 DELETE FROM media
@@ -101,8 +110,8 @@ WHERE user_id = ?"#,
 
     query!(
         r#"
-        DELETE FROM users
-        WHERE id = ?"#,
+DELETE FROM users
+WHERE id = ?"#,
         id,
     )
     .execute(pool)
@@ -183,6 +192,19 @@ pub async fn delete_media_for_user(
 ) -> Result<(), DbError> {
     query!(
         r#"
+DELETE FROM media_history_entries
+WHERE media_type = ? AND media_id = ? AND user_id = ?"#,
+        media_type,
+        media_id,
+        user_id,
+    )
+    .execute(pool)
+    .await
+    .map(|_| ())
+    .map_err(DbError::QueryError)?;
+
+    query!(
+        r#"
 DELETE FROM media
 WHERE type = ? AND id = ? AND user_id = ?"#,
         media_type,
@@ -215,5 +237,40 @@ WHERE type = ? AND id = ? AND user_id = ?"#,
     .execute(pool)
     .await
     .map(|r| r.rows_affected() > 0)
+    .map_err(DbError::QueryError)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MediaHistoryEntry {
+    pub id: i64,
+    pub rating: Option<i64>,
+    pub title: Option<String>,
+    pub comment: Option<String>,
+    pub start_date: Option<Date>,
+    pub start_date_valid: DateValidity,
+    pub end_date: Option<Date>,
+    pub end_date_valid: DateValidity,
+}
+
+pub async fn get_media_history_entry_by_user_and_media(
+    pool: &SqlitePool,
+    user_id: i64,
+    media_id: i64,
+    media_type: MediaType,
+) -> Result<Option<MediaHistoryEntry>, DbError> {
+    query_as!(
+        MediaHistoryEntry,
+        r#"
+SELECT id, rating, title, comment,
+start_date, start_date_valid as "start_date_valid: DateValidity",
+end_date, end_date_valid as "end_date_valid: DateValidity"
+FROM media_history_entries
+WHERE user_id = ? AND media_id = ? AND media_type = ?"#,
+        user_id,
+        media_id,
+        media_type,
+    )
+    .fetch_optional(pool)
+    .await
     .map_err(DbError::QueryError)
 }
