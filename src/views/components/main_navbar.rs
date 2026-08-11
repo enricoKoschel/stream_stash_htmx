@@ -84,7 +84,7 @@ pub fn main_navbar(search_query: Option<&SearchQuery>) -> Markup {
             form class="flex-1 flex gap-2 justify-center" hx-get="/search" hx-push-url="true" {
                 div class="flex-1 flex join" {
                     input class="flex-1 input outline-0 min-w-60 join-item" name="q" type="text" placeholder="Search" value=[search_query.map(|s| &s.q)];
-                    select class="select outline-0 w-26 cursor-pointer join-item" name="t" {
+                    select class="select outline-0 w-30 cursor-pointer join-item" name="t" {
                         @for media_type in MEDIA_TYPES {
                             option selected[search_query.is_some_and(|s| s.t == media_type)] { (media_type); }
                         }
