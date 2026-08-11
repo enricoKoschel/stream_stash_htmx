@@ -5,7 +5,7 @@ pub fn privacy_page() -> Markup {
     logged_out_layout(html! {
         div class="max-w-4xl flex flex-col mx-auto gap-8" {
             h1 class="text-4xl font-bold" { "Privacy Policy"; }
-            p class="text-base-content/70" { "Last updated: January 2025"; }
+            p class="text-base-content/70" { "Last updated: January 2026"; }
 
             section class="flex flex-col gap-4" {
                 h2 class="text-2xl font-semibold" { "1. Introduction"; }
