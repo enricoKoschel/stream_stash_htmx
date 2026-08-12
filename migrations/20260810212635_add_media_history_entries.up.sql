@@ -3,7 +3,7 @@ CREATE TABLE media_history_entries (
     user_id INTEGER NOT NULL,
     media_id INTEGER NOT NULL,
     media_type TEXT NOT NULL,
-    rating INTEGER,
+    rating INTEGER CHECK (rating BETWEEN 1 AND 5),
     title TEXT,
     comment TEXT,
     start_date DATE,
