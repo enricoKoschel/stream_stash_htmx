@@ -1,6 +1,6 @@
 use crate::AppSession;
 use crate::data_source::db::{
-    add_media_for_user, delete_media_for_user, get_specific_media_by_user_id,
+    create_or_replace_media_for_user, delete_media_for_user, get_specific_media_by_user_id,
     update_media_state_for_user,
 };
 use crate::data_source::{
@@ -86,20 +86,26 @@ async fn put_media(
     Path((media_type, media_id)): Path<(MediaType, i64)>,
     session: AppSession,
 ) -> impl IntoResponse {
-    let media =
-        match add_media_for_user(&state.db_pool, media_type, media_id, session.user_id).await {
-            Ok(media) => media,
-            Err(e) => {
-                tracing::error!(
-                    "Failed to add media with type {} and id {} for user {}: {}",
-                    media_type,
-                    media_id,
-                    session.user_id,
-                    e
-                );
-                return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to add media").into_response();
-            }
-        };
+    let media = match create_or_replace_media_for_user(
+        &state.db_pool,
+        media_type,
+        media_id,
+        session.user_id,
+    )
+    .await
+    {
+        Ok(media) => media,
+        Err(e) => {
+            tracing::error!(
+                "Failed to add media with type {} and id {} for user {}: {}",
+                media_type,
+                media_id,
+                session.user_id,
+                e
+            );
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to add media").into_response();
+        }
+    };
 
     let states: Vec<_> = match media_type {
         MediaType::Movies => &MEDIA_STATES_MOVIE[..],

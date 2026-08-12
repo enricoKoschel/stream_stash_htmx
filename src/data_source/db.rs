@@ -162,7 +162,7 @@ WHERE type = ? AND id = ? AND user_id = ?"#,
     .map_err(DbError::QueryError)
 }
 
-pub async fn add_media_for_user(
+pub async fn create_or_replace_media_for_user(
     pool: &SqlitePool,
     media_type: MediaType,
     media_id: i64,
