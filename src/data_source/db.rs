@@ -295,6 +295,7 @@ pub struct MediaHistoryEntry {
     pub end_date_valid: DateValidity,
 }
 
+// TODO: Order by end date (if present, coalesce to 01.01.1900?), then by date validity, then by id
 pub async fn get_media_history_entries_by_user_and_media(
     pool: &SqlitePool,
     user_id: i64,
@@ -364,9 +365,10 @@ RETURNING id, rating, title, comment,
 }
 
 #[allow(clippy::too_many_arguments)]
-pub async fn update_media_history_entry_for_id(
+pub async fn update_media_history_entry_for_user_by_id(
     pool: &SqlitePool,
     id: i64,
+    user_id: i64,
     rating: Patch<i64>,
     title: Patch<String>,
     comment: Patch<String>,
@@ -396,6 +398,8 @@ pub async fn update_media_history_entry_for_id(
     if has_updates {
         query_builder.push(" WHERE id = ");
         query_builder.push_bind(id);
+        query_builder.push(" AND user_id = ");
+        query_builder.push_bind(user_id);
 
         query_builder
             .build()
@@ -419,12 +423,17 @@ WHERE id = ?"#,
     .map_err(DbError::QueryError)
 }
 
-pub async fn delete_media_history_entry_by_id(pool: &SqlitePool, id: i64) -> Result<(), DbError> {
+pub async fn delete_media_history_entry_for_user_by_id(
+    pool: &SqlitePool,
+    id: i64,
+    user_id: i64,
+) -> Result<(), DbError> {
     query!(
         r#"
 DELETE FROM media_history_entries
-WHERE id = ?"#,
+WHERE id = ? AND user_id = ?"#,
         id,
+        user_id,
     )
     .execute(pool)
     .await
