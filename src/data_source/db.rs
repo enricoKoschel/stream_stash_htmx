@@ -254,7 +254,6 @@ pub struct MediaHistoryEntry {
     pub end_date_valid: DateValidity,
 }
 
-// TODO: Order by end date (if present, coalesce to 01.01.1900?), then by date validity, then by id
 pub async fn get_media_history_entries_by_user_and_media(
     pool: &SqlitePool,
     user_id: i64,
@@ -268,7 +267,14 @@ SELECT id, rating, title, comment,
        start_date, start_date_valid as "start_date_valid: DateValidity",
        end_date, end_date_valid as "end_date_valid: DateValidity"
 FROM media_history_entries
-WHERE user_id = ? AND media_id = ? AND media_type = ?"#,
+WHERE user_id = ? AND media_id = ? AND media_type = ?
+ORDER BY start_date DESC,
+         CASE start_date_valid
+             WHEN 'Everything' THEN 1
+             WHEN 'YearAndMonth' THEN 2
+             WHEN 'YearOnly' THEN 3
+             ELSE 4
+         END"#,
         user_id,
         media_id,
         media_type,
