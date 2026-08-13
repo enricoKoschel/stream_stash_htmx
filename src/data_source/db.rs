@@ -1,6 +1,6 @@
 use crate::data_source::{DateValidity, MediaState, MediaType};
 use serde::Deserialize;
-use sqlx::{QueryBuilder, Sqlite, SqlitePool, query, query_as};
+use sqlx::{SqlitePool, query, query_as};
 use thiserror::Error;
 use time::{Date, PrimitiveDateTime};
 
@@ -12,47 +12,6 @@ pub enum DbError {
     UserWithGoogleAccountIdAlreadyExists(String),
     #[error("Rating must be between 1 and 5, but is {0}")]
     RatingOutOfRange(i64),
-}
-
-pub enum Patch<T> {
-    Missing,
-    Null,
-    Value(T),
-}
-
-pub enum PatchRequired<T> {
-    Missing,
-    Value(T),
-}
-
-macro_rules! apply_patch_nullable {
-    ($patch:expr, $column:literal, $separated:ident, $has_updates:ident) => {
-        match $patch {
-            Patch::Missing => {}
-            Patch::Null => {
-                $separated.push(concat!($column, " = NULL"));
-                $has_updates = true;
-            }
-            Patch::Value(value) => {
-                $separated.push(concat!($column, " = "));
-                $separated.push_bind_unseparated(value);
-                $has_updates = true;
-            }
-        }
-    };
-}
-
-macro_rules! apply_patch_required {
-    ($patch:expr, $column:literal, $separated:ident, $has_updates:ident) => {
-        match $patch {
-            PatchRequired::Missing => {}
-            PatchRequired::Value(value) => {
-                $separated.push(concat!($column, " = "));
-                $separated.push_bind_unseparated(value);
-                $has_updates = true;
-            }
-        }
-    };
 }
 
 #[derive(Debug, Deserialize)]
@@ -369,57 +328,38 @@ pub async fn update_media_history_entry_for_user_by_id(
     pool: &SqlitePool,
     id: i64,
     user_id: i64,
-    rating: Patch<i64>,
-    title: Patch<String>,
-    comment: Patch<String>,
-    start_date: Patch<Date>,
-    start_date_valid: PatchRequired<DateValidity>,
-    end_date: Patch<Date>,
-    end_date_valid: PatchRequired<DateValidity>,
-) -> Result<MediaHistoryEntry, DbError> {
-    if let Patch::Value(rating) = rating
+    rating: Option<i64>,
+    title: Option<String>,
+    comment: Option<String>,
+    start_date: Option<Date>,
+    start_date_valid: DateValidity,
+    end_date: Option<Date>,
+    end_date_valid: DateValidity,
+) -> Result<bool, DbError> {
+    if let Some(rating) = rating
         && !(1..=5).contains(&rating)
     {
         return Err(DbError::RatingOutOfRange(rating));
     }
 
-    let mut query_builder = QueryBuilder::<Sqlite>::new("UPDATE media_history_entries SET ");
-    let mut separated = query_builder.separated(", ");
-    let mut has_updates = false;
-
-    apply_patch_nullable!(rating, "rating", separated, has_updates);
-    apply_patch_nullable!(title, "title", separated, has_updates);
-    apply_patch_nullable!(comment, "comment", separated, has_updates);
-    apply_patch_nullable!(start_date, "start_date", separated, has_updates);
-    apply_patch_required!(start_date_valid, "start_date_valid", separated, has_updates);
-    apply_patch_nullable!(end_date, "end_date", separated, has_updates);
-    apply_patch_required!(end_date_valid, "end_date_valid", separated, has_updates);
-
-    if has_updates {
-        query_builder.push(" WHERE id = ");
-        query_builder.push_bind(id);
-        query_builder.push(" AND user_id = ");
-        query_builder.push_bind(user_id);
-
-        query_builder
-            .build()
-            .execute(pool)
-            .await
-            .map_err(DbError::QueryError)?;
-    }
-
-    query_as!(
-        MediaHistoryEntry,
+    query!(
         r#"
-SELECT id, rating, title, comment,
-       start_date, start_date_valid as "start_date_valid: DateValidity",
-       end_date, end_date_valid as "end_date_valid: DateValidity"
-FROM media_history_entries
-WHERE id = ?"#,
+UPDATE media_history_entries
+SET rating = ?, title = ?, comment = ?, start_date = ?, start_date_valid = ?, end_date = ?, end_date_valid = ? 
+WHERE id = ? AND user_id = ?"#,
+        rating,
+        title,
+        comment,
+        start_date,
+        start_date_valid,
+        end_date,
+        end_date_valid,
         id,
+        user_id,
     )
-    .fetch_one(pool)
+    .execute(pool)
     .await
+    .map(|r| r.rows_affected() > 0)
     .map_err(DbError::QueryError)
 }
 
