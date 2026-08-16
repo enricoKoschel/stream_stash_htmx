@@ -90,13 +90,39 @@ WHERE id = ?"#,
 }
 
 pub async fn delete_user(pool: &SqlitePool, id: i64) -> Result<(), DbError> {
+    let mut tx = pool.begin().await.map_err(DbError::QueryError)?;
+
+    query!(
+        r#"
+DELETE FROM tower_sessions
+WHERE id IN (
+    SELECT session_id
+    FROM user_sessions
+    WHERE user_id = ?
+)"#,
+        id,
+    )
+    .execute(tx.as_mut())
+    .await
+    .map_err(DbError::QueryError)?;
+
+    query!(
+        r#"
+DELETE FROM user_sessions
+WHERE user_id = ?"#,
+        id,
+    )
+    .execute(tx.as_mut())
+    .await
+    .map_err(DbError::QueryError)?;
+
     query!(
         r#"
 DELETE FROM media_history_entries
 WHERE user_id = ?"#,
         id,
     )
-    .execute(pool)
+    .execute(tx.as_mut())
     .await
     .map_err(DbError::QueryError)?;
 
@@ -106,7 +132,7 @@ DELETE FROM media
 WHERE user_id = ?"#,
         id,
     )
-    .execute(pool)
+    .execute(tx.as_mut())
     .await
     .map_err(DbError::QueryError)?;
 
@@ -115,6 +141,26 @@ WHERE user_id = ?"#,
 DELETE FROM users
 WHERE id = ?"#,
         id,
+    )
+    .execute(tx.as_mut())
+    .await
+    .map(|_| ())
+    .map_err(DbError::QueryError)?;
+
+    tx.commit().await.map_err(DbError::QueryError)
+}
+
+pub async fn create_or_replace_user_session(
+    pool: &SqlitePool,
+    user_id: i64,
+    session_id: &str,
+) -> Result<(), DbError> {
+    query!(
+        r#"
+INSERT OR REPLACE INTO user_sessions (session_id, user_id)
+VALUES (?, ?)"#,
+        session_id,
+        user_id,
     )
     .execute(pool)
     .await
@@ -186,12 +232,14 @@ RETURNING id, type as "type: MediaType", state as "state: MediaState""#,
     .map_err(DbError::QueryError)
 }
 
-pub async fn delete_media_for_user(
+pub async fn delete_specific_media_for_user(
     pool: &SqlitePool,
     media_type: MediaType,
     media_id: i64,
     user_id: i64,
 ) -> Result<(), DbError> {
+    let mut tx = pool.begin().await.map_err(DbError::QueryError)?;
+
     query!(
         r#"
 DELETE FROM media_history_entries
@@ -200,7 +248,7 @@ WHERE media_type = ? AND media_id = ? AND user_id = ?"#,
         media_id,
         user_id,
     )
-    .execute(pool)
+    .execute(tx.as_mut())
     .await
     .map(|_| ())
     .map_err(DbError::QueryError)?;
@@ -213,10 +261,12 @@ WHERE type = ? AND id = ? AND user_id = ?"#,
         media_id,
         user_id,
     )
-    .execute(pool)
+    .execute(tx.as_mut())
     .await
     .map(|_| ())
-    .map_err(DbError::QueryError)
+    .map_err(DbError::QueryError)?;
+
+    tx.commit().await.map_err(DbError::QueryError)
 }
 
 pub async fn update_media_state_for_user(

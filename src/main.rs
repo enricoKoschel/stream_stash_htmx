@@ -78,6 +78,7 @@ struct AppState {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // TODO: Probably don't error? No .env file when deployed on server?
     if let Err(e) = dotenvy::dotenv() {
         panic!("Error while loading .env file: {e}")
     }
@@ -91,12 +92,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // TODO: Get from env
     tracing_subscriber::fmt()
-        .with_max_level(LevelFilter::DEBUG)
+        .with_max_level(LevelFilter::INFO)
         .init();
 
+    // TODO: Imbed migrations in source?
     let db_pool = SqlitePool::connect(&sqlite_connection_string).await?;
     let session_store = SqliteStore::new(db_pool.clone());
-    session_store.migrate().await?;
 
     let deletion_task = tokio::task::spawn(
         session_store

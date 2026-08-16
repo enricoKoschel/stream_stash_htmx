@@ -1,5 +1,6 @@
 use crate::data_source::db::{
-    create_user, delete_user, get_media_by_user_id, get_user_by_google_account_id, get_user_by_id,
+    create_or_replace_user_session, create_user, delete_user, get_media_by_user_id,
+    get_user_by_google_account_id, get_user_by_id,
 };
 use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
 use crate::data_source::tmdb::TmdbService;
@@ -278,6 +279,43 @@ async fn login_post(
                     .into_response();
             }
 
+            if let Err(e) = session.save().await {
+                tracing::error!("Failed to persist session: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to create session",
+                )
+                    .into_response();
+            }
+
+            // TODO: If error occurs between saving session cookie and creating user session in db,
+            // db state is inconsistent (pretty unlikely though)
+
+            let Some(session_id) = session.id().map(|id| id.to_string()) else {
+                tracing::error!("Session ID missing after successful session save");
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to create session",
+                )
+                    .into_response();
+            };
+
+            if let Err(e) =
+                create_or_replace_user_session(&state.db_pool, user_id, &session_id).await
+            {
+                tracing::error!(
+                    "Failed to create user session {} for user {}: {}",
+                    session_id,
+                    user_id,
+                    e
+                );
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to create session",
+                )
+                    .into_response();
+            }
+
             axum::response::Redirect::to("/").into_response()
         }
         Err(e) => {
@@ -364,7 +402,11 @@ async fn delete_account(
             .into_response();
     }
 
-    logout(session).await;
+    // Redundant, because delete_user() deletes all session information from DB,
+    // but why not?
+    if let Err(e) = session.delete().await {
+        tracing::error!("Failed to delete session after account deletion: {}", e);
+    }
 
     (StatusCode::NO_CONTENT, [("HX-Location", "/")]).into_response()
 }

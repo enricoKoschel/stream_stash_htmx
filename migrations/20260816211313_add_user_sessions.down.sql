@@ -1,0 +1,2 @@
+DROP TRIGGER user_sessions_cleanup_after_tower_sessions_delete;
+DROP TABLE user_sessions;
