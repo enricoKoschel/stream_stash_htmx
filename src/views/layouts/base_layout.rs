@@ -21,7 +21,7 @@ pub fn base_layout(
         (DOCTYPE);
         html {
             head {
-                script src="/static/htmx.min.js" async {}
+                script src="/static/htmx.min.js" {}
                 link rel="stylesheet" href="/static/styles.css";
 
                 meta name="viewport" content="width=device-width, height=device-height, minimum-scale=1.0, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
