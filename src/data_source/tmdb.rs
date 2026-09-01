@@ -7,7 +7,10 @@ use serde::{Deserialize, Serialize};
 use url::{ParseError, Url};
 
 use crate::{
-    data_source::{MEDIA_STATES_MOVIE, MEDIA_STATES_TV_SHOW, Media, MediaType, TmdbMedia},
+    data_source::{
+        MEDIA_STATES_MOVIE, MEDIA_STATES_TV_SHOW, Media, MediaType, TmdbMedia,
+        db::MediaHistoryEntry,
+    },
     views::{components::media_card, pages::media_page},
 };
 
@@ -264,7 +267,7 @@ impl TmdbService {
         )
     }
 
-    pub fn map_media_to_page(&self, media: &Media) -> Markup {
+    pub fn map_media_to_page(&self, media: &Media, history: &[MediaHistoryEntry]) -> Markup {
         let title = &media.tmdb_media.sanitized_title();
         let overview = Self::get_string_or_default(media.tmdb_media.overview(), "");
         let release_date =
@@ -282,6 +285,12 @@ impl TmdbService {
         .map(|s| s.to_string())
         .collect();
 
+        let media_url = &format!(
+            "/media/{}/{}",
+            media.tmdb_media.r#type(),
+            media.tmdb_media.id()
+        );
+
         media_page(
             title,
             overview,
@@ -290,11 +299,9 @@ impl TmdbService {
             backdrop_url.as_deref(),
             media.state.map(|s| s.to_string()).as_deref(),
             &states.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
-            &format!(
-                "/media/{}/{}",
-                media.tmdb_media.r#type(),
-                media.tmdb_media.id()
-            ),
+            media_url,
+            history,
+            media.tmdb_media.r#type(),
         )
     }
 }

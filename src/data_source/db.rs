@@ -1,8 +1,12 @@
-use crate::data_source::{DateValidity, MediaState, MediaType};
+use crate::data_source::{MediaState, MediaType};
 use serde::Deserialize;
 use sqlx::{SqlitePool, query, query_as};
 use thiserror::Error;
-use time::{Date, PrimitiveDateTime};
+use time::{
+    Date, PrimitiveDateTime, format_description::BorrowedFormatItem, macros::format_description,
+};
+
+pub const DATE_FORMAT: &[BorrowedFormatItem<'_>] = format_description!("[year]-[month]-[day]");
 
 #[derive(Debug, Error)]
 pub enum DbError {
@@ -10,7 +14,7 @@ pub enum DbError {
     QueryError(#[from] sqlx::Error),
     #[error("User with this Google account ID already exists: {0}")]
     UserWithGoogleAccountIdAlreadyExists(String),
-    #[error("Rating must be between 1 and 5, but is {0}")]
+    #[error("Rating must be between 1 and 10, but is {0}")]
     RatingOutOfRange(i64),
 }
 
@@ -299,9 +303,7 @@ pub struct MediaHistoryEntry {
     pub title: Option<String>,
     pub comment: Option<String>,
     pub start_date: Option<Date>,
-    pub start_date_valid: DateValidity,
     pub end_date: Option<Date>,
-    pub end_date_valid: DateValidity,
 }
 
 pub async fn get_media_history_entries_by_user_and_media(
@@ -313,18 +315,10 @@ pub async fn get_media_history_entries_by_user_and_media(
     query_as!(
         MediaHistoryEntry,
         r#"
-SELECT id, rating, title, comment,
-       start_date, start_date_valid as "start_date_valid: DateValidity",
-       end_date, end_date_valid as "end_date_valid: DateValidity"
+SELECT id, rating, title, comment, start_date, end_date
 FROM media_history_entries
 WHERE user_id = ? AND media_id = ? AND media_type = ?
-ORDER BY start_date DESC,
-         CASE start_date_valid
-             WHEN 'Everything' THEN 1
-             WHEN 'YearAndMonth' THEN 2
-             WHEN 'YearOnly' THEN 3
-             ELSE 4
-         END"#,
+ORDER BY start_date DESC"#,
         user_id,
         media_id,
         media_type,
@@ -341,15 +335,13 @@ pub async fn create_media_history_entry_for_user_and_media(
     media_id: i64,
     media_type: MediaType,
     rating: Option<i64>,
-    title: Option<String>,
-    comment: Option<String>,
-    start_date: Option<Date>,
-    start_date_valid: DateValidity,
-    end_date: Option<Date>,
-    end_date_valid: DateValidity,
+    title: Option<&str>,
+    comment: Option<&str>,
+    start_date: Option<&Date>,
+    end_date: Option<&Date>,
 ) -> Result<MediaHistoryEntry, DbError> {
     if let Some(rating) = rating
-        && !(1..=5).contains(&rating)
+        && !(1..=10).contains(&rating)
     {
         return Err(DbError::RatingOutOfRange(rating));
     }
@@ -358,11 +350,9 @@ pub async fn create_media_history_entry_for_user_and_media(
         MediaHistoryEntry,
         r#"
 INSERT INTO media_history_entries (user_id, media_id, media_type, rating, title,
-            comment, start_date, start_date_valid, end_date, end_date_valid)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING id, rating, title, comment,
-          start_date, start_date_valid as "start_date_valid: DateValidity",
-          end_date, end_date_valid as "end_date_valid: DateValidity""#,
+            comment, start_date, end_date)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, rating, title, comment, start_date, end_date"#,
         user_id,
         media_id,
         media_type,
@@ -370,9 +360,7 @@ RETURNING id, rating, title, comment,
         title,
         comment,
         start_date,
-        start_date_valid,
         end_date,
-        end_date_valid,
     )
     .fetch_one(pool)
     .await
@@ -383,17 +371,17 @@ RETURNING id, rating, title, comment,
 pub async fn update_media_history_entry_for_user_by_id(
     pool: &SqlitePool,
     id: i64,
+    media_id: i64,
+    media_type: MediaType,
     user_id: i64,
     rating: Option<i64>,
-    title: Option<String>,
-    comment: Option<String>,
-    start_date: Option<Date>,
-    start_date_valid: DateValidity,
-    end_date: Option<Date>,
-    end_date_valid: DateValidity,
+    title: Option<&str>,
+    comment: Option<&str>,
+    start_date: Option<&Date>,
+    end_date: Option<&Date>,
 ) -> Result<bool, DbError> {
     if let Some(rating) = rating
-        && !(1..=5).contains(&rating)
+        && !(1..=10).contains(&rating)
     {
         return Err(DbError::RatingOutOfRange(rating));
     }
@@ -401,16 +389,16 @@ pub async fn update_media_history_entry_for_user_by_id(
     query!(
         r#"
 UPDATE media_history_entries
-SET rating = ?, title = ?, comment = ?, start_date = ?, start_date_valid = ?, end_date = ?, end_date_valid = ? 
-WHERE id = ? AND user_id = ?"#,
+SET rating = ?, title = ?, comment = ?, start_date = ?, end_date = ?
+WHERE id = ? AND media_id = ? AND media_type = ? AND user_id = ?"#,
         rating,
         title,
         comment,
         start_date,
-        start_date_valid,
         end_date,
-        end_date_valid,
         id,
+        media_id,
+        media_type,
         user_id,
     )
     .execute(pool)
@@ -422,13 +410,17 @@ WHERE id = ? AND user_id = ?"#,
 pub async fn delete_media_history_entry_for_user_by_id(
     pool: &SqlitePool,
     id: i64,
+    media_id: i64,
+    media_type: MediaType,
     user_id: i64,
 ) -> Result<(), DbError> {
     query!(
         r#"
 DELETE FROM media_history_entries
-WHERE id = ? AND user_id = ?"#,
+WHERE id = ? AND media_id = ? AND media_type = ? AND user_id = ?"#,
         id,
+        media_id,
+        media_type,
         user_id,
     )
     .execute(pool)

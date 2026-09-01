@@ -29,7 +29,7 @@ jsonwebtoken = { version = "10.2.0", features = ["aws_lc_rs"] }
 tracing = "0.1.44"
 tower-sessions = "0.14.0"
 tower-sessions-sqlx-store = { version = "0.15.0", features = ["sqlite"] }
-time = { version = "0.3.45", features = ["formatting"] }
+time = { version = "0.3.45", features = ["formatting", "macros", "parsing"] }
 
 [build-dependencies]
 time = { version = "0.3.45", features = ["formatting"] }

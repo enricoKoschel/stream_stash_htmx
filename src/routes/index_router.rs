@@ -6,7 +6,7 @@ use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_res
 use crate::data_source::tmdb::TmdbService;
 use crate::data_source::{MediaType, TmdbMedia};
 use crate::views::components::card_collection;
-use crate::views::layouts::search_layout::search_results_count_bar;
+use crate::views::components::search_results_count_bar;
 use crate::views::pages::{
     about_page, login_page, main_page, privacy_page, profile_page, search_page,
 };

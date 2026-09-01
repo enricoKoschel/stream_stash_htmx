@@ -4,7 +4,6 @@ use crate::{
 };
 use maud::{Markup, html};
 
-// TODO: Media item as struct?
 pub fn search_page(
     search_query: &SearchQuery,
     shown_results: i32,

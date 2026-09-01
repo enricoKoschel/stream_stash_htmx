@@ -1,3 +1,4 @@
+mod add_media_to_list_button;
 mod card_collection;
 mod error_modal;
 mod google_login_button;
@@ -6,8 +7,12 @@ mod logged_out_navbar;
 mod main_footer;
 mod main_navbar;
 mod media_card;
+mod media_history_entry;
+mod search_results_count_bar;
 mod skeleton_card;
+mod watch_state_dropdown;
 
+pub use add_media_to_list_button::add_media_to_list_button;
 pub use card_collection::card_collection;
 pub use error_modal::error_modal;
 pub use google_login_button::google_login_button;
@@ -16,4 +21,7 @@ pub use logged_out_navbar::logged_out_navbar;
 pub use main_footer::main_footer;
 pub use main_navbar::main_navbar;
 pub use media_card::media_card;
+pub use media_history_entry::media_history_entry;
+pub use search_results_count_bar::search_results_count_bar;
 pub use skeleton_card::skeleton_card;
+pub use watch_state_dropdown::watch_state_dropdown;

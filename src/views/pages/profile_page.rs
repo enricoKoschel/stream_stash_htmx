@@ -40,7 +40,7 @@ pub fn profile_page(
                     p { "THIS ACTION CANNOT BE UNDONE!"; }
                     p { "Type DELETE to confirm."; }
                 }
-                form class="flex flex-col gap-2" hx-post="/deleteAccount" hx-on:show-account-not-deleted-modal="document.getElementById('account-not-deleted-modal').showModal()" {
+                form class="flex flex-col gap-2" hx-post="/deleteAccount" hx-on:show-account-not-deleted-modal="document.getElementById('account-not-deleted-modal').showModal()" autocomplete="off" {
                     input id="confirm-delete-input" class="input outline-0 w-full" name="confirm" type="text" placeholder="DELETE";
                     div class="flex gap-2 w-full" {
                         div class="flex-2 hidden sm:block" {}

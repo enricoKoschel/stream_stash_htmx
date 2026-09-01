@@ -1,20 +1,26 @@
 use crate::AppSession;
 use crate::data_source::db::{
-    create_or_replace_media_for_user, delete_media_for_user, get_specific_media_by_user_id,
-    update_media_state_for_user,
+    DATE_FORMAT, create_media_history_entry_for_user_and_media, create_or_replace_media_for_user,
+    delete_media_history_entry_for_user_by_id, delete_specific_media_for_user,
+    get_media_history_entries_by_user_and_media, get_specific_media_by_user_id,
+    update_media_history_entry_for_user_by_id, update_media_state_for_user,
 };
 use crate::data_source::{
     MEDIA_STATES_MOVIE, MEDIA_STATES_TV_SHOW, Media, MediaState, MediaType, TmdbMedia,
 };
-use crate::views::pages::media_page::{add_media_to_list_button, watch_state_dropdown};
+use crate::views::components::{
+    add_media_to_list_button, media_history_entry, watch_state_dropdown,
+};
 use crate::{AppState, views::maybe_document};
 use axum::Form;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::{Router, extract::Path, routing::get};
+use axum::routing::{get, patch, post};
+use axum::{Router, extract::Path};
 use axum_htmx::HxRequest;
 use serde::Deserialize;
+use time::Date;
 
 async fn get_media(
     HxRequest(hx_request): HxRequest,
@@ -70,8 +76,29 @@ async fn get_media(
         },
     };
 
+    let history = match get_media_history_entries_by_user_and_media(
+        &state.db_pool,
+        session.user_id,
+        media_id,
+        media_type,
+    )
+    .await
+    {
+        Ok(history) => history,
+        Err(e) => {
+            tracing::error!(
+                "Failed to fetch history for media with type {} and id {} for user {}: {}",
+                media_type,
+                media_id,
+                session.user_id,
+                e
+            );
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to load history").into_response();
+        }
+    };
+
     let title = Some(media.tmdb_media.sanitized_title());
-    let page = state.tmdb_service.map_media_to_page(&media);
+    let page = state.tmdb_service.map_media_to_page(&media, &history);
     maybe_document(
         hx_request,
         title.as_deref(),
@@ -174,7 +201,7 @@ async fn delete_media(
     session: AppSession,
 ) -> impl IntoResponse {
     if let Err(e) =
-        delete_media_for_user(&state.db_pool, media_type, media_id, session.user_id).await
+        delete_specific_media_for_user(&state.db_pool, media_type, media_id, session.user_id).await
     {
         tracing::error!(
             "Failed to delete media with type {} and id {} for user {}: {}",
@@ -189,12 +216,174 @@ async fn delete_media(
     add_media_to_list_button(&format!("/media/{}/{}", media_type, media_id)).into_response()
 }
 
-pub fn media_router() -> Router<AppState> {
-    Router::new().route(
-        "/{media_type}/{id}",
-        get(get_media)
-            .put(put_media)
-            .patch(patch_media)
-            .delete(delete_media),
+async fn post_media_history(
+    State(state): State<AppState>,
+    Path((media_type, media_id)): Path<(MediaType, i64)>,
+    session: AppSession,
+) -> impl IntoResponse {
+    let history_entry = match create_media_history_entry_for_user_and_media(
+        &state.db_pool,
+        session.user_id,
+        media_id,
+        media_type,
+        None,
+        None,
+        None,
+        None,
+        None,
     )
+    .await
+    {
+        Ok(history_entry) => history_entry,
+        Err(e) => {
+            tracing::error!(
+                "Failed to create media history entry for media with type {} and id {} for user {}: {}",
+                media_type,
+                media_id,
+                session.user_id,
+                e
+            );
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to create media history entry",
+            )
+                .into_response();
+        }
+    };
+
+    media_history_entry(
+        &history_entry,
+        &format!("/media/{media_type}/{media_id}/history"),
+        media_type,
+    )
+    .into_response()
+}
+
+#[derive(Debug, Deserialize)]
+struct MediaHistoryPatchBody {
+    rating: Option<i64>,
+    title: Option<String>,
+    comment: Option<String>,
+    start_date: Option<String>,
+    end_date: Option<String>,
+}
+
+fn parse_date(date_str: Option<&str>) -> Result<Option<Date>, String> {
+    match date_str
+        .filter(|date_str| !date_str.is_empty())
+        .map(|date_str| Date::parse(date_str, DATE_FORMAT))
+    {
+        Some(Ok(date)) => Ok(Some(date)),
+        Some(Err(e)) => Err(e.to_string()),
+        None => Ok(None),
+    }
+}
+
+async fn patch_media_history_entry(
+    State(state): State<AppState>,
+    Path((media_type, media_id, entry_id)): Path<(MediaType, i64, i64)>,
+    session: AppSession,
+    Form(body): Form<MediaHistoryPatchBody>,
+) -> impl IntoResponse {
+    let Ok(start_date) = parse_date(body.start_date.as_deref()) else {
+        return (StatusCode::BAD_REQUEST, "Invalid start_date").into_response();
+    };
+    let Ok(end_date) = parse_date(body.end_date.as_deref()) else {
+        return (StatusCode::BAD_REQUEST, "Invalid end_date").into_response();
+    };
+
+    match update_media_history_entry_for_user_by_id(
+        &state.db_pool,
+        entry_id,
+        media_id,
+        media_type,
+        session.user_id,
+        body.rating,
+        body.title.as_deref().map(|title| title.trim()),
+        body.comment.as_deref().map(|comment| comment.trim()),
+        start_date.as_ref(),
+        end_date.as_ref(),
+    )
+    .await
+    {
+        Ok(true) => StatusCode::NO_CONTENT.into_response(),
+        Ok(false) => {
+            tracing::error!(
+                "Failed to update media history entry {} for media with type {} and id {} for user {}: Media history entry not found",
+                entry_id,
+                media_type,
+                media_id,
+                session.user_id,
+            );
+            (
+                StatusCode::NOT_FOUND,
+                "Failed to update media history entry",
+            )
+                .into_response()
+        }
+        Err(e) => {
+            tracing::error!(
+                "Failed to update media history entry {} for media with type {} and id {} for user {}: {}",
+                entry_id,
+                media_type,
+                media_id,
+                session.user_id,
+                e
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to update media history entry",
+            )
+                .into_response()
+        }
+    }
+}
+
+async fn delete_media_history_entry(
+    State(state): State<AppState>,
+    Path((media_type, media_id, entry_id)): Path<(MediaType, i64, i64)>,
+    session: AppSession,
+) -> impl IntoResponse {
+    if let Err(e) = delete_media_history_entry_for_user_by_id(
+        &state.db_pool,
+        entry_id,
+        media_id,
+        media_type,
+        session.user_id,
+    )
+    .await
+    {
+        tracing::error!(
+            "Failed to delete media history entry {} for media with type {} and id {} for user {}: {}",
+            entry_id,
+            media_type,
+            media_id,
+            session.user_id,
+            e
+        );
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to delete media history entry",
+        )
+            .into_response();
+    }
+
+    // OK instead of NO_CONTENT to clear the history entry on the page
+    StatusCode::OK.into_response()
+}
+
+pub fn media_router() -> Router<AppState> {
+    Router::new()
+        .route(
+            "/{media_type}/{media_id}",
+            get(get_media)
+                .put(put_media)
+                .patch(patch_media)
+                .delete(delete_media),
+        )
+        .route("/{media_type}/{media_id}/history", post(post_media_history))
+        .route(
+            "/{media_type}/{media_id}/history/{entry_id}",
+            patch(patch_media_history_entry).delete(delete_media_history_entry),
+        )
 }

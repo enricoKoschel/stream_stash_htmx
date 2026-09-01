@@ -136,11 +136,3 @@ impl Display for MediaState {
         }
     }
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Deserialize, sqlx::Type)]
-pub enum DateValidity {
-    Nothing,
-    YearOnly,
-    YearAndMonth,
-    Everything,
-}
