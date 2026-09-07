@@ -1,6 +1,5 @@
 use maud::{Markup, html};
 
-// TODO: Media card as struct?
 pub fn card_collection(cards: &[Markup], after_search: bool, only_cards: bool) -> Markup {
     let rendered_cards = if !cards.is_empty() {
         Some(html! {
