@@ -24,14 +24,43 @@ pub fn base_layout(
                 script src="/static/htmx.min.js" {}
                 link rel="stylesheet" href="/static/styles.css";
 
-                meta name="viewport" content="width=device-width, height=device-height, minimum-scale=1.0, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
+                meta
+                    name="viewport"
+                    content="width=device-width,
+                             height=device-height,
+                             minimum-scale=1.0,
+                             initial-scale=1.0,
+                             maximum-scale=1.0,
+                             user-scalable=no";
 
-                link rel="icon" type="image/png" sizes="128x128" href="/static/icons/favicon-128x128.png";
-                link rel="icon" type="image/png" sizes="96x96" href="/static/icons/favicon-96x96.png";
-                link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32x32.png";
-                link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16x16.png";
-                link rel="icon" type="image/svg" href="/static/logos/StreamStashNoText.svg";
-                link rel="icon" type="image/ico" href="/static/favicon.ico";
+                link
+                    rel="icon"
+                    type="image/png"
+                    sizes="128x128"
+                    href="/static/icons/favicon-128x128.png";
+                link
+                    rel="icon"
+                    type="image/png"
+                    sizes="96x96"
+                    href="/static/icons/favicon-96x96.png";
+                link
+                    rel="icon"
+                    type="image/png"
+                    sizes="32x32"
+                    href="/static/icons/favicon-32x32.png";
+                link
+                    rel="icon"
+                    type="image/png"
+                    sizes="16x16"
+                    href="/static/icons/favicon-16x16.png";
+                link
+                    rel="icon"
+                    type="image/svg"
+                    href="/static/logos/StreamStashNoText.svg";
+                link
+                    rel="icon"
+                    type="image/ico"
+                    href="/static/favicon.ico";
 
                 (page_title(title));
 
@@ -47,8 +76,11 @@ pub fn base_layout(
                     data-login_uri=(login_redirect_url)
                     data-auto_prompt="false" {}
 
-                noscript class="text-6xl flex justify-center items-center w-screen h-screen text-center" {
-                    "This site requires JavaScript to function. Please enable JavaScript in your browser settings.";
+                noscript class="text-6xl flex justify-center items-center
+                                w-screen h-screen text-center"
+                {
+                    "This site requires JavaScript to function.
+                    Please enable JavaScript in your browser settings.";
                 }
                 div id="main-content" class="noscript:hidden" {
                     (children);

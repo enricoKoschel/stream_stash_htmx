@@ -41,7 +41,8 @@ pub async fn create_user(
         r#"
 INSERT INTO users (google_account_id, email, username, picture_url)
 VALUES (?, ?, ?, ?)
-RETURNING id, google_account_id, email, username, picture_url, created_at as "created_at: PrimitiveDateTime""#,
+RETURNING id, google_account_id, email, username, picture_url,
+          created_at as "created_at: PrimitiveDateTime""#,
         google_account_id,
         email,
         username,
@@ -69,7 +70,8 @@ pub async fn get_user_by_google_account_id(
     query_as!(
         User,
         r#"
-SELECT id, google_account_id, email, username, picture_url, created_at as "created_at: PrimitiveDateTime"
+SELECT id, google_account_id, email, username, picture_url,
+       created_at as "created_at: PrimitiveDateTime"
 FROM users
 WHERE google_account_id = ?"#,
         google_account_id,
@@ -83,7 +85,8 @@ pub async fn get_user_by_id(pool: &SqlitePool, id: i64) -> Result<Option<User>, 
     query_as!(
         User,
         r#"
-SELECT id, google_account_id, email, username, picture_url, created_at as "created_at: PrimitiveDateTime"
+SELECT id, google_account_id, email, username, picture_url,
+       created_at as "created_at: PrimitiveDateTime"
 FROM users
 WHERE id = ?"#,
         id,

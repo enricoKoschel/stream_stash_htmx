@@ -4,7 +4,9 @@ use maud::{Markup, html};
 pub fn logged_out_navbar() -> Markup {
     html! {
         // Mobile navbar
-        div class="sm:hidden fixed top-0 w-full z-1 bg-base-200 shadow-md flex px-2 py-1" {
+        div class="sm:hidden fixed top-0 w-full z-1 bg-base-200 shadow-md
+                   flex px-2 py-1"
+        {
             div class="flex-1" {
                 a class="btn btn-square btn-ghost btn-sm" href="/" {
                     (home_solid("size-6"));

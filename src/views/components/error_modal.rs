@@ -9,7 +9,10 @@ pub fn error_modal() -> Markup {
                     "An error occurred while processing your request.";
                 }
                 div class="modal-action" {
-                    button class="btn btn-primary w-full sm:text-lg" onclick="document.getElementById('error-modal').close()" {
+                    button
+                        class="btn btn-primary w-full sm:text-lg"
+                        onclick="document.getElementById('error-modal').close()"
+                    {
                         "Close";
                     }
                 }

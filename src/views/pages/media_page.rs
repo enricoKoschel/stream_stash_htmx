@@ -27,23 +27,39 @@ fn history_section(
     };
 
     html! {
-        div id="media-history-section" class={"w-full max-w-5xl mx-auto mt-12 " @if hidden { "hidden"; }} {
+        div
+            id="media-history-section"
+            class={"w-full max-w-5xl mx-auto mt-12 " @if hidden { "hidden"; }}
+        {
             div class="flex justify-between items-center mb-4" {
                 h2 class="text-xl sm:text-2xl font-semibold" { "Watch History"; }
-                button class="btn btn-primary btn-md sm:btn-lg" hx-post=(&history_url) hx-target="#watch-history-list" hx-swap="afterbegin" {
+                button
+                    class="btn btn-primary btn-md sm:btn-lg"
+                    hx-post=(&history_url)
+                    hx-target="#watch-history-list"
+                    hx-swap="afterbegin"
+                {
                     (plus_solid("size-5 sm:size-6"));
                     "Add Entry";
                 }
             }
 
             div class="group" {
-                div id="watch-history-list" class={"flex flex-col gap-3 overflow-y-auto pr-2 " (list_height)}{
+                div
+                    id="watch-history-list"
+                    class={"flex flex-col gap-3 overflow-y-auto pr-2 " (list_height)}
+                {
                     @for entry in history {
                         (media_history_entry(entry, &history_url, media_type));
                     }
                 }
 
-                p id="watch-history-empty-label" class="hidden group-has-[#watch-history-list:empty]:block text-base-content/70 text-lg sm:text-2xl text-center mt-4" {
+                p
+                    id="watch-history-empty-label"
+                    class="hidden group-has-[#watch-history-list:empty]:block
+                           text-base-content/70 text-lg sm:text-2xl text-center
+                           mt-4"
+                {
                     "No watch history yet. Add an entry to get started!";
                 }
             }

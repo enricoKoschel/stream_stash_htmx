@@ -9,17 +9,36 @@ pub fn media_card(
     next_page_url: Option<&str>,
 ) -> Markup {
     let children = html! {
-        a class="relative block group not-pointer-fine:hidden" href=(media_page_url) {
-            (image_with_fallback("rounded-lg brightness-100 group-hover:brightness-28 transition-[filter]", "aspect-2/3", poster_url));
+        a
+            class="relative block group not-pointer-fine:hidden"
+            href=(media_page_url)
+        {
+            (image_with_fallback("rounded-lg brightness-100
+                                 group-hover:brightness-28 transition-[filter]",
+                                 "aspect-2/3",
+                                 poster_url));
 
-            div class="absolute inset-0 p-4 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity" {
-                h2 class="text-lg font-medium text-center mb-3 line-clamp-5 text-ellipsis wrap-anywhere" { (title); }
+            div class="absolute inset-0 p-4 flex flex-col justify-center
+                       opacity-0 group-hover:opacity-100 transition-opacity"
+            {
+                h2 class="text-lg font-medium text-center mb-3 line-clamp-5
+                          text-ellipsis wrap-anywhere"
+                {
+                    (title);
+                }
                 p class="text-md text-center" { (year); }
             }
         }
-        a class="pointer-fine:hidden h-full bg-gray-700 rounded-lg flex flex-col" href=(media_page_url) {
+        a
+            class="pointer-fine:hidden h-full bg-gray-700 rounded-lg flex flex-col"
+            href=(media_page_url)
+        {
             div class="flex-1 flex flex-col justify-center m-2" {
-                h2 class="text-md font-medium text-center mb-3 line-clamp-3 text-ellipsis wrap-anywhere" { (title); }
+                h2 class="text-md font-medium text-center mb-3 line-clamp-3
+                          text-ellipsis wrap-anywhere"
+                {
+                    (title);
+                }
                 p class="text-sm text-center" { (year); }
             }
 
@@ -29,13 +48,17 @@ pub fn media_card(
 
     html! {
         @if let Some(next_page_url) = next_page_url {
-            div hx-get=(next_page_url) hx-trigger="revealed" hx-target="this" hx-swap="afterend" hx-indicator="#search-loading-indicator" {
+            div
+                hx-get=(next_page_url)
+                hx-trigger="revealed"
+                hx-target="this"
+                hx-swap="afterend"
+                hx-indicator="#search-loading-indicator"
+            {
                 (children);
             }
         } @else {
-            div {
-                (children);
-            }
+            div { (children); }
         }
     }
 }

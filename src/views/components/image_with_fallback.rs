@@ -6,7 +6,14 @@ pub fn image_with_fallback(class: &str, aspect_class: &str, src: Option<&str>) -
 
     match src {
         Some(src) => html! {
-            img class=(class) referrerpolicy="no-referrer" loading="lazy" src=(src) onerror="this.onerror=false; this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');";
+            img
+                class=(class)
+                referrerpolicy="no-referrer"
+                loading="lazy"
+                src=(src)
+                onerror="this.onerror=false;
+                         this.classList.add('hidden');
+                         this.nextElementSibling.classList.remove('hidden');";
             (no_symbol_solid(&format!("hidden border {class}")));
         },
         None => html! {

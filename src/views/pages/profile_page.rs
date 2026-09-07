@@ -15,7 +15,9 @@ pub fn profile_page(
             h1 class="text-6xl font-medium" { "Profile"; }
             // Padding for visual allignment
             div class="flex max-sm:flex-col max-sm:items-center gap-4 md:pl-25" {
-                (image_with_fallback("size-25 rounded-full", "aspect-square", picture_url));
+                (image_with_fallback("size-25 rounded-full",
+                                     "aspect-square",
+                                     picture_url));
                 div class="flex flex-col justify-center gap-2 text-xl" {
                     "E-Mail: " (email);
                     br;
@@ -25,7 +27,8 @@ pub fn profile_page(
                 }
             }
             btn class="btn btn-error"
-                onclick="document.getElementById('confirm-delete-input').value = ''; document.getElementById('delete-account-modal').showModal()"
+                onclick="document.getElementById('confirm-delete-input').value = '';
+                         document.getElementById('delete-account-modal').showModal()"
             {
                 "Delete account";
             }
@@ -40,14 +43,33 @@ pub fn profile_page(
                     p { "THIS ACTION CANNOT BE UNDONE!"; }
                     p { "Type DELETE to confirm."; }
                 }
-                form class="flex flex-col gap-2" hx-post="/deleteAccount" hx-on:show-account-not-deleted-modal="document.getElementById('account-not-deleted-modal').showModal()" autocomplete="off" {
-                    input id="confirm-delete-input" class="input outline-0 w-full" name="confirm" type="text" placeholder="DELETE";
+                form
+                    class="flex flex-col gap-2"
+                    hx-post="/deleteAccount"
+                    hx-on:show-account-not-deleted-modal=
+                        "document.getElementById('account-not-deleted-modal').showModal()"
+                    autocomplete="off"
+                {
+                    input
+                        id="confirm-delete-input"
+                        class="input outline-0 w-full"
+                        name="confirm"
+                        type="text"
+                        placeholder="DELETE";
                     div class="flex gap-2 w-full" {
                         div class="flex-2 hidden sm:block" {}
-                        button class="flex-1 btn btn-primary" type="reset" onclick="document.getElementById('delete-account-modal').close()" {
+                        button
+                            class="flex-1 btn btn-primary"
+                            type="reset"
+                            onclick="document.getElementById('delete-account-modal').close()"
+                        {
                             "Cancel";
                         }
-                        button class="flex-1 btn btn-error" type="submit" onclick="document.getElementById('delete-account-modal').close()" {
+                        button
+                            class="flex-1 btn btn-error"
+                            type="submit"
+                            onclick="document.getElementById('delete-account-modal').close()"
+                        {
                             "Confirm";
                         }
                     }
@@ -65,7 +87,10 @@ pub fn profile_page(
                 p class="text-xl sm:text-2xl" {
                     "Your account was NOT deleted!";
                 }
-                button class="btn btn-primary" onclick="document.getElementById('account-not-deleted-modal').close()" {
+                button
+                    class="btn btn-primary"
+                    onclick="document.getElementById('account-not-deleted-modal').close()"
+                {
                     "Okay";
                 }
             }

@@ -21,7 +21,10 @@ pub fn media_history_entry(
         .map(|end_date| end_date.format(DATE_FORMAT).expect("Date should format"));
 
     html! {
-        div id=(format!("watch-history-entry-{}", entry.id)) class="bg-base-200 shadow-md rounded-xl" {
+        div
+            id=(format!("watch-history-entry-{}", entry.id))
+            class="bg-base-200 shadow-md rounded-xl"
+        {
             div class="flex flex-col p-4 gap-5" {
                 form
                     class="flex flex-col gap-3"
@@ -45,21 +48,31 @@ pub fn media_history_entry(
                                 input
                                     class={
                                         "mask mask-star-2 bg-orange-400 "
-                                        @if rating % 2 == 1 { "mask-half-1" } @else { "mask-half-2" }
+                                        @if rating % 2 == 1 {
+                                            "mask-half-1"
+                                        } @else {
+                                            "mask-half-2"
+                                        }
                                     }
                                     type="radio"
                                     name="rating"
                                     value=(rating)
                                     checked[entry.rating == Some(rating)]
                                     onmousedown="this.dataset.wasChecked = this.checked"
-                                    onclick="if (this.dataset.wasChecked === 'true') { this.checked = false; this.form.dispatchEvent(new Event('change', { bubbles: true })); }" {}
+                                    onclick="if (this.dataset.wasChecked === 'true') {
+                                                this.checked = false;
+                                                this.form.dispatchEvent(
+                                                    new Event('change', { bubbles: true })
+                                                );
+                                             }" {}
                             }
                         }
                     }
 
                     // Comment
                     textarea
-                        class="textarea textarea-md outline-0 resize-none w-full min-h-auto"
+                        class="textarea textarea-md outline-0 resize-none
+                               w-full min-h-auto"
                         name="comment"
                         rows="2"
                         placeholder="Entry comment"
@@ -74,27 +87,44 @@ pub fn media_history_entry(
                     // which triggers a Safari on iOS bug where tapping
                     // the native clear button doesn't clear the field,
                     // but resets it to the value fields contents
-                    div class="flex max-sm:flex-col max-sm:gap-3 sm:items-center justify-between" {
+                    div class="flex max-sm:flex-col max-sm:gap-3
+                               sm:items-center justify-between"
+                    {
                         // Start date
                         div class="flex gap-3 w-50" {
-                            label class="flex items-center gap-1 text-sm text-base-content/70" {
+                            label class="flex items-center gap-1 text-sm
+                                         text-base-content/70"
+                            {
                                 (calendar_solid("size-4"));
                                 @match media_type {
                                     MediaType::TvShows => "Start",
                                     MediaType::Movies => "Watched",
                                 }
                             }
-                            input id=(format!("start-date-{}", entry.id)) class="input outline-0" type="date" name="start_date" {}
+                            input
+                                id=(format!("start-date-{}", entry.id))
+                                class="input outline-0"
+                                type="date"
+                                name="start_date" {}
                         }
 
                         // End date
                         // Movies only have 1 date
-                        div class={"flex gap-4.5 sm:gap-3 w-50 justify-start sm:justify-end " @if media_type == MediaType::Movies { "hidden"; }} {
-                            label class="flex items-center gap-1 text-sm text-base-content/70" {
+                        div class={"flex gap-4.5 sm:gap-3 w-50
+                                    justify-start sm:justify-end "
+                                    @if media_type == MediaType::Movies { "hidden"; }}
+                        {
+                            label class="flex items-center gap-1 text-sm
+                                         text-base-content/70"
+                            {
                                 (calendar_solid("size-4"));
                                 "End";
                             }
-                            input id=(format!("end-date-{}", entry.id)) class="input outline-0" type="date" name="end_date" {}
+                            input
+                                id=(format!("end-date-{}", entry.id))
+                                class="input outline-0"
+                                type="date"
+                                name="end_date" {}
                         }
                     }
                 }
