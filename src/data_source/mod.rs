@@ -101,7 +101,12 @@ pub enum MediaType {
         alias = "tv shows",
         alias = "TV SHOWS",
         alias = "Tv Shows",
-        alias = "Tv shows"
+        alias = "Tv shows",
+        alias = "TVShows",
+        alias = "tvshows",
+        alias = "TVSHOWS",
+        alias = "TvShows",
+        alias = "Tvshows"
     )]
     TvShows,
 }

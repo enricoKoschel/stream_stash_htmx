@@ -182,14 +182,19 @@ pub struct Media {
     pub state: MediaState,
 }
 
-pub async fn get_media_by_user_id(pool: &SqlitePool, user_id: i64) -> Result<Vec<Media>, DbError> {
+pub async fn get_media_by_user_id_and_type(
+    pool: &SqlitePool,
+    user_id: i64,
+    media_type: MediaType,
+) -> Result<Vec<Media>, DbError> {
     query_as!(
         Media,
         r#"
 SELECT id, type as "type: MediaType", state as "state: MediaState"
 FROM media
-WHERE user_id = ?"#,
+WHERE user_id = ? AND type=?"#,
         user_id,
+        media_type,
     )
     .fetch_all(pool)
     .await

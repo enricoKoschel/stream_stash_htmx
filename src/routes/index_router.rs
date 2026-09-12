@@ -1,5 +1,5 @@
 use crate::data_source::db::{
-    create_or_replace_user_session, create_user, delete_user, get_media_by_user_id,
+    create_or_replace_user_session, create_user, delete_user, get_media_by_user_id_and_type,
     get_user_by_google_account_id, get_user_by_id,
 };
 use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
@@ -24,20 +24,34 @@ use serde::Deserialize;
 use time::format_description::well_known::Rfc2822;
 use tower_sessions::Session;
 
+#[derive(Deserialize)]
+pub struct IndexQuery {
+    #[serde(alias = "T")]
+    pub t: Option<MediaType>,
+}
+
 async fn index(
     HxRequest(hx_request): HxRequest,
+    Query(query): Query<IndexQuery>,
     State(state): State<AppState>,
     session: AppSession,
 ) -> impl IntoResponse {
-    let media = match get_media_by_user_id(&state.db_pool, session.user_id).await {
-        Ok(media) => media,
-        Err(e) => {
-            tracing::error!("Failed to fetch media for user {}: {}", session.user_id, e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to load media").into_response();
-        }
-    };
+    // TODO: Allow setting default view somewhere?
+    let selected_media_type = query.t.unwrap_or(MediaType::Movies);
+
+    let media =
+        match get_media_by_user_id_and_type(&state.db_pool, session.user_id, selected_media_type)
+            .await
+        {
+            Ok(media) => media,
+            Err(e) => {
+                tracing::error!("Failed to fetch media for user {}: {}", session.user_id, e);
+                return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to load media").into_response();
+            }
+        };
 
     let mut cards = Vec::with_capacity(media.len());
+    // TODO: Check for media type outside of loop
     for m in &media {
         let media_result = match m.r#type {
             MediaType::Movies => state
@@ -67,7 +81,7 @@ async fn index(
         None,
         &state.google_client_id,
         state.login_url,
-        main_page(&cards),
+        main_page(&cards, selected_media_type, false),
     )
 }
 

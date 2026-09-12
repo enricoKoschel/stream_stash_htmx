@@ -1,5 +1,7 @@
-use crate::views::components::{card_collection, google_login_button, skeleton_card};
+use crate::data_source::MediaType;
+use crate::views::components::{google_login_button, skeleton_card};
 use crate::views::layouts::main_layout;
+use crate::views::pages::main_page;
 use maud::{Markup, html};
 
 pub fn login_page() -> Markup {
@@ -22,7 +24,7 @@ pub fn login_page() -> Markup {
         }
 
         div class="opacity-50" {
-            (card_collection(&cards, false, false));
+            (main_page(&cards, MediaType::Movies, true));
         }
     })
 }
