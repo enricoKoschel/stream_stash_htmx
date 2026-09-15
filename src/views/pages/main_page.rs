@@ -9,7 +9,7 @@ pub fn main_page(cards: &[Markup], selected_media_type: MediaType, without_layou
             @for media_type in MEDIA_TYPES {
                 a
                     class={
-                        "tab "
+                        "tab grow "
                         @if media_type == selected_media_type { "tab-active" }
                     }
                     href=(format!("/?t={}", media_type))
