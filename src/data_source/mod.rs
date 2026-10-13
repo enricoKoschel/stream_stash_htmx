@@ -9,15 +9,15 @@ pub mod tmdb;
 pub const MEDIA_TYPES: [MediaType; 2] = [MediaType::Movies, MediaType::TvShows];
 
 pub const MEDIA_STATES_MOVIE: [MediaState; 3] = [
-    MediaState::Finished,
     MediaState::Planned,
+    MediaState::Finished,
     MediaState::Dropped,
 ];
 pub const MEDIA_STATES_TV_SHOW: [MediaState; 5] = [
-    MediaState::Finished,
     MediaState::InProgress,
     MediaState::Planned,
     MediaState::Waiting,
+    MediaState::Finished,
     MediaState::Dropped,
 ];
 
@@ -120,7 +120,7 @@ impl Display for MediaType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, sqlx::Type)]
 pub enum MediaState {
     Finished,
     #[serde(alias = "In progress")]

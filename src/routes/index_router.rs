@@ -4,7 +4,9 @@ use crate::data_source::db::{
 };
 use crate::data_source::search::{SearchQuery, build_search_url, fetch_search_results};
 use crate::data_source::tmdb::TmdbService;
-use crate::data_source::{MediaType, TmdbMedia};
+use crate::data_source::{
+    MEDIA_STATES_MOVIE, MEDIA_STATES_TV_SHOW, MediaState, MediaType, TmdbMedia,
+};
 use crate::views::components::card_collection;
 use crate::views::components::search_results_count_bar;
 use crate::views::pages::{
@@ -20,7 +22,9 @@ use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum_cookie::CookieManager;
 use axum_htmx::HxRequest;
+use maud::Markup;
 use serde::Deserialize;
+use std::collections::HashMap;
 use time::format_description::well_known::Rfc2822;
 use tower_sessions::Session;
 
@@ -50,7 +54,7 @@ async fn index(
             }
         };
 
-    let mut cards = Vec::with_capacity(media.len());
+    let mut cards: HashMap<MediaState, Vec<Markup>> = HashMap::new();
     // TODO: Check for media type outside of loop
     for m in &media {
         let media_result = match m.r#type {
@@ -67,7 +71,10 @@ async fn index(
         };
 
         match media_result {
-            Ok(media) => cards.push(state.tmdb_service.map_media_to_card(&media, None)),
+            Ok(media) => cards
+                .entry(m.state)
+                .or_default()
+                .push(state.tmdb_service.map_media_to_card(&media, None)),
             Err(e) => {
                 tracing::warn!("Failed to fetch details for media id {}: {}", m.id, e);
                 // Continue loading other media even if one fails
@@ -76,12 +83,17 @@ async fn index(
         }
     }
 
+    let media_states = match selected_media_type {
+        MediaType::Movies => MEDIA_STATES_MOVIE.to_vec(),
+        MediaType::TvShows => MEDIA_STATES_TV_SHOW.to_vec(),
+    };
+
     maybe_document(
         hx_request,
         None,
         &state.google_client_id,
         state.login_url,
-        main_page(&cards, selected_media_type, false),
+        main_page(&cards, selected_media_type, &media_states, false),
     )
 }
 

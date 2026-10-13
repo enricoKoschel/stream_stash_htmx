@@ -192,7 +192,14 @@ pub async fn get_media_by_user_id_and_type(
         r#"
 SELECT id, type as "type: MediaType", state as "state: MediaState"
 FROM media
-WHERE user_id = ? AND type=?"#,
+WHERE user_id = ? AND type = ?
+ORDER BY (
+    SELECT start_date
+    FROM media_history_entries
+    WHERE user_id = media.user_id AND media_id = media.id AND media_type = media.type
+    ORDER BY start_date DESC
+    LIMIT 1
+) DESC"#,
         user_id,
         media_type,
     )

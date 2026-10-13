@@ -1,11 +1,17 @@
-use crate::data_source::MediaType;
+use std::collections::HashMap;
+
+use crate::data_source::{MEDIA_STATES_MOVIE, MediaState, MediaType};
 use crate::views::components::{google_login_button, skeleton_card};
 use crate::views::layouts::main_layout;
 use crate::views::pages::main_page;
 use maud::{Markup, html};
 
 pub fn login_page() -> Markup {
-    let cards = vec![skeleton_card(); 10];
+    let cards = HashMap::from([
+        (MediaState::Planned, vec![skeleton_card(); 5]),
+        (MediaState::Finished, vec![skeleton_card(); 8]),
+        (MediaState::Dropped, vec![skeleton_card(); 2]),
+    ]);
 
     main_layout(html! {
         dialog id="login-modal" class="modal modal-open" {
@@ -24,7 +30,7 @@ pub fn login_page() -> Markup {
         }
 
         div class="opacity-50" {
-            (main_page(&cards, MediaType::Movies, true));
+            (main_page(&cards, MediaType::Movies, &MEDIA_STATES_MOVIE, true));
         }
     })
 }

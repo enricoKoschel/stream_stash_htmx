@@ -25,7 +25,7 @@ pub fn card_collection(cards: &[Markup], after_search: bool, only_cards: bool) -
                     (rendered_cards);
                 }
             } @else {
-                div class="flex justify-center" {
+                div class="flex justify-center text-center" {
                     @if after_search {
                         h2 class="text-4xl" { "No search results for this query"; }
                     } @else {
