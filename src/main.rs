@@ -12,6 +12,7 @@ use sqlx::SqlitePool;
 use std::net::Ipv4Addr;
 use tokio::net::TcpListener;
 use tokio::{signal, task::AbortHandle};
+use tower_http::compression::CompressionLayer;
 use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 use tower_sessions::cookie::SameSite;
@@ -131,6 +132,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(AutoVaryLayer)
         .layer(CookieLayer::strict())
         .layer(session_layer)
+        .layer(CompressionLayer::new())
         .with_state(app_state);
 
     let listener = TcpListener::bind((Ipv4Addr::UNSPECIFIED, 8000)).await?;
