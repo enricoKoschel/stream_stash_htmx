@@ -28,10 +28,7 @@ pub fn base_layout(
                     name="viewport"
                     content="width=device-width,
                              height=device-height,
-                             minimum-scale=1.0,
-                             initial-scale=1.0,
-                             maximum-scale=1.0,
-                             user-scalable=no";
+                             initial-scale=1.0";
 
                 link
                     rel="icon"
