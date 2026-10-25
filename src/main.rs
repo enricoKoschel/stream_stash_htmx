@@ -10,7 +10,7 @@ use axum_htmx::AutoVaryLayer;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use std::net::Ipv4Addr;
-use tokio::net::TcpListener;
+use std::str::FromStr;
 use tokio::{signal, task::AbortHandle};
 use tower_http::compression::CompressionLayer;
 use tower_http::services::{ServeDir, ServeFile};
@@ -18,6 +18,7 @@ use tower_http::trace::TraceLayer;
 use tower_sessions::cookie::SameSite;
 use tower_sessions::{ExpiredDeletion, Session, SessionManagerLayer};
 use tower_sessions_sqlx_store::SqliteStore;
+use tracing::{info, warn};
 use tracing_subscriber::filter::LevelFilter;
 
 mod data_source;
@@ -91,10 +92,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let google_client_id = std::env::var("GOOGLE_CLIENT_ID")
         .expect("Please provide a GOOGLE_CLIENT_ID environment variable");
 
-    // TODO: Get from env
-    tracing_subscriber::fmt()
-        .with_max_level(LevelFilter::INFO)
-        .init();
+    let (log_level, should_warn) = {
+        match std::env::var("LOG_LEVEL") {
+            Ok(log_level) => match LevelFilter::from_str(&log_level) {
+                Ok(log_level) => (log_level, false),
+                Err(_) => (LevelFilter::INFO, true),
+            },
+            Err(_) => (LevelFilter::INFO, true),
+        }
+    };
+    tracing_subscriber::fmt().with_max_level(log_level).init();
+    if should_warn {
+        warn!("No or invalid LOG_LEVEL environment variable found, using default value of INFO");
+    } else {
+        info!("Current LOG_LEVEL: {}", log_level);
+    }
 
     // TODO: Imbed migrations in source?
     let db_pool = SqlitePool::connect(&sqlite_connection_string).await?;
@@ -135,13 +147,45 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(CompressionLayer::new())
         .with_state(app_state);
 
-    let listener = TcpListener::bind((Ipv4Addr::UNSPECIFIED, 8000)).await?;
+    #[cfg(debug_assertions)]
+    {
+        let listener = tokio::net::TcpListener::bind((Ipv4Addr::UNSPECIFIED, 8000)).await?;
 
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal(deletion_task.abort_handle()))
-        .await?;
+        axum::serve(listener, app)
+            .with_graceful_shutdown(shutdown_signal(deletion_task.abort_handle()))
+            .await?;
+    }
 
-    deletion_task.await??;
+    #[cfg(not(debug_assertions))]
+    {
+        let tls_cert_path = std::env::var("TLS_CERT_PATH")
+            .expect("Please provide a TLS_CERT_PATH environment variable");
+        let tls_key_path = std::env::var("TLS_KEY_PATH")
+            .expect("Please provide a TLS_KEY_PATH environment variable");
+
+        let tls_config =
+            axum_server::tls_rustls::RustlsConfig::from_pem_file(tls_cert_path, tls_key_path)
+                .await?;
+
+        let handle = axum_server::Handle::<std::net::SocketAddr>::new();
+        let shutdown_handle = handle.clone();
+        let abort_handle = deletion_task.abort_handle();
+        tokio::spawn(async move {
+            shutdown_signal(abort_handle).await;
+            shutdown_handle.graceful_shutdown(None);
+        });
+
+        axum_server::bind_rustls((Ipv4Addr::UNSPECIFIED, 443).into(), tls_config)
+            .handle(handle)
+            .serve(app.into_make_service())
+            .await?;
+    }
+
+    match deletion_task.await {
+        Ok(result) => result?,
+        Err(error) if error.is_cancelled() => {}
+        Err(error) => return Err(error.into()),
+    }
 
     Ok(())
 }
