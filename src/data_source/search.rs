@@ -2,36 +2,14 @@ use crate::data_source::tmdb::{ITEMS_PER_PAGE, TmdbService};
 use crate::data_source::{MediaType, TmdbMedia};
 use maud::Markup;
 use serde::Deserialize;
-use url::Url;
 
-pub fn build_search_url(
-    base_url: &str,
-    query: &str,
-    media_type: MediaType,
-    page: Option<i32>,
-) -> String {
-    // TODO: Find a better approach for relative URL manipulation
-    // "http://localhost" is necessary for the URL to parse
-    // and is stripped out later
-    let base = Url::parse("http://localhost").expect("base URL should parse");
-
-    let Ok(mut url) = base.join(base_url) else {
-        return "/".to_string();
+pub fn build_search_url(query: &str, media_type: MediaType, page: Option<i32>) -> String {
+    let page = if let Some(page) = page {
+        format!("&p={}", page)
+    } else {
+        "".to_string()
     };
-
-    {
-        let mut pairs = url.query_pairs_mut();
-        pairs
-            .clear()
-            .append_pair("q", query)
-            .append_pair("t", &media_type.to_string());
-
-        if let Some(p) = page {
-            pairs.append_pair("p", &p.to_string());
-        }
-    }
-
-    base.make_relative(&url).unwrap_or_else(|| "/".to_string())
+    format!("/search?q={}&t={}{}", query, media_type, page)
 }
 
 #[derive(Deserialize)]

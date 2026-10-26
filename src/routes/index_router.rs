@@ -17,7 +17,7 @@ use crate::{AppSession, AppState, MaybeAppSession};
 use axum::Form;
 use axum::Router;
 use axum::extract::{Query, State};
-use axum::http::{StatusCode, Uri};
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum_cookie::CookieManager;
@@ -128,18 +128,13 @@ async fn search(
     Query(query): Query<SearchQuery>,
     State(state): State<AppState>,
     _session: AppSession,
-    uri: Uri,
 ) -> impl IntoResponse {
     if query.q.trim().is_empty() {
         return StatusCode::NO_CONTENT.into_response();
     }
 
-    let uri_str = uri.to_string();
-
     match query.p {
-        Some(page) => {
-            handle_paginated_search(hx_request, &state.tmdb_service, &query, &uri_str, page).await
-        }
+        Some(page) => handle_paginated_search(hx_request, &state.tmdb_service, &query, page).await,
         None => {
             handle_initial_search(
                 hx_request,
@@ -147,7 +142,6 @@ async fn search(
                 state.login_url,
                 &state.tmdb_service,
                 &query,
-                &uri_str,
             )
             .await
         }
@@ -158,11 +152,10 @@ async fn handle_paginated_search(
     hx_request: bool,
     tmdb_service: &TmdbService,
     query: &SearchQuery,
-    uri_str: &str,
     page: i32,
 ) -> Response {
     // TODO: Redirect before doing all of this unnecessary work?
-    let next_page_url = build_search_url(uri_str, &query.q, query.t, Some(page + 1));
+    let next_page_url = build_search_url(&query.q, query.t, Some(page + 1));
     let result =
         match fetch_search_results(tmdb_service, &query.q, query.t, page, &next_page_url).await {
             Ok(result) => result,
@@ -172,7 +165,7 @@ async fn handle_paginated_search(
             }
         };
 
-    let url_no_page = build_search_url(uri_str, &query.q, query.t, None);
+    let url_no_page = build_search_url(&query.q, query.t, None);
     let card_collection = card_collection(&result.cards, false, true);
     maybe_redirect(
         hx_request,
@@ -191,9 +184,8 @@ async fn handle_initial_search(
     login_url: &str,
     tmdb_service: &TmdbService,
     query: &SearchQuery,
-    uri_str: &str,
 ) -> Response {
-    let next_page_url = build_search_url(uri_str, &query.q, query.t, Some(2));
+    let next_page_url = build_search_url(&query.q, query.t, Some(2));
     let result =
         match fetch_search_results(tmdb_service, &query.q, query.t, 1, &next_page_url).await {
             Ok(result) => result,
