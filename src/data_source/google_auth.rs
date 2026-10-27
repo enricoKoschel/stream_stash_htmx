@@ -14,14 +14,12 @@ const GOOGLE_ISSUERS: &[&str] = &["https://accounts.google.com", "accounts.googl
 pub enum GoogleAuthError {
     #[error("Invalid ID token: {0}")]
     InvalidToken(String),
-    #[error("CSRF token mismatch")]
-    CsrfMismatch,
-    #[error("Missing CSRF cookie")]
-    MissingCsrfCookie,
     #[error("Failed to fetch Google keys: {0}")]
     KeyFetchError(String),
     #[error("Key not found for kid: {0}")]
     KeyNotFound(String),
+    #[error("Nonce mismatch")]
+    NonceMismatch,
     #[error("Google is not authoritative for this user")]
     GoogleNotAuthoritative,
 }
@@ -89,6 +87,7 @@ struct GoogleIdTokenClaims {
     name: Option<String>,
     picture: Option<String>,
     hd: Option<String>,
+    nonce: Option<String>,
 }
 
 struct CachedKeys {
@@ -115,7 +114,11 @@ impl GoogleAuthService {
         }
     }
 
-    pub async fn verify_token(&self, id_token: &str) -> Result<VerifiedUser, GoogleAuthError> {
+    pub async fn verify_token(
+        &self,
+        id_token: &str,
+        expected_nonce: &str,
+    ) -> Result<VerifiedUser, GoogleAuthError> {
         let header = decode_header(id_token)
             .map_err(|e| GoogleAuthError::InvalidToken(format!("Invalid header: {}", e)))?;
 
@@ -137,6 +140,10 @@ impl GoogleAuthService {
             })?;
 
         let claims = token_data.claims;
+
+        if claims.nonce.as_deref() != Some(expected_nonce) {
+            return Err(GoogleAuthError::NonceMismatch);
+        }
 
         let user = VerifiedUser {
             sub: claims.sub,
@@ -213,20 +220,6 @@ impl GoogleAuthService {
             })?;
 
             cache.keys.insert(key.kid, decoding_key);
-        }
-
-        Ok(())
-    }
-
-    pub fn verify_csrf(
-        &self,
-        cookie_token: Option<&str>,
-        body_token: &str,
-    ) -> Result<(), GoogleAuthError> {
-        let cookie_token = cookie_token.ok_or(GoogleAuthError::MissingCsrfCookie)?;
-
-        if cookie_token != body_token {
-            return Err(GoogleAuthError::CsrfMismatch);
         }
 
         Ok(())

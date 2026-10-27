@@ -12,7 +12,6 @@ pub fn maybe_document(
     hx_request: bool,
     title: Option<&str>,
     google_client_id: &str,
-    login_redirect_url: &str,
     children: Markup,
 ) -> Response {
     if hx_request {
@@ -21,7 +20,7 @@ pub fn maybe_document(
             (children);
         }
     } else {
-        base_layout(title, google_client_id, login_redirect_url, children)
+        base_layout(title, google_client_id, children)
     }
     .into_response()
 }

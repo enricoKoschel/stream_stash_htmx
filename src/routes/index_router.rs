@@ -14,16 +14,15 @@ use crate::views::pages::{
 };
 use crate::views::{maybe_document, maybe_redirect};
 use crate::{AppSession, AppState, MaybeAppSession};
-use axum::Form;
 use axum::Router;
 use axum::extract::{Query, State};
-use axum::http::StatusCode;
+use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
-use axum_cookie::CookieManager;
+use axum::{Form, Json};
 use axum_htmx::HxRequest;
 use maud::Markup;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use time::format_description::well_known::Rfc2822;
 use tower_sessions::Session;
@@ -92,7 +91,6 @@ async fn index(
         hx_request,
         None,
         &state.google_client_id,
-        state.login_url,
         main_page(&cards, selected_media_type, &media_states, false),
     )
 }
@@ -105,7 +103,6 @@ async fn about(
         hx_request,
         Some("About"),
         &state.google_client_id,
-        state.login_url,
         about_page(),
     )
 }
@@ -118,7 +115,6 @@ async fn privacy(
         hx_request,
         Some("Privacy Policy"),
         &state.google_client_id,
-        state.login_url,
         privacy_page(),
     )
 }
@@ -139,7 +135,6 @@ async fn search(
             handle_initial_search(
                 hx_request,
                 &state.google_client_id,
-                state.login_url,
                 &state.tmdb_service,
                 &query,
             )
@@ -181,7 +176,6 @@ async fn handle_paginated_search(
 async fn handle_initial_search(
     hx_request: bool,
     google_client_id: &str,
-    login_url: &str,
     tmdb_service: &TmdbService,
     query: &SearchQuery,
 ) -> Response {
@@ -198,7 +192,6 @@ async fn handle_initial_search(
         hx_request,
         Some(&query.q),
         google_client_id,
-        login_url,
         search_page(
             query,
             result.shown_results,
@@ -222,35 +215,71 @@ async fn login_get(
         hx_request,
         Some("Login"),
         &state.google_client_id,
-        state.login_url,
         login_page(),
     )
+}
+
+const LOGIN_CHALLENGE_KEY: &str = "login_challenge";
+
+#[derive(Serialize, Deserialize)]
+struct LoginChallenge {
+    nonce: String,
+    state: String,
+}
+
+fn random_token() -> String {
+    rand::random::<[u8; 32]>()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
+}
+
+async fn login_nonce(session: Session) -> impl IntoResponse {
+    let challenge = LoginChallenge {
+        nonce: random_token(),
+        state: random_token(),
+    };
+
+    if let Err(e) = session.insert(LOGIN_CHALLENGE_KEY, &challenge).await {
+        tracing::error!("Failed to store login challenge: {}", e);
+        return (StatusCode::INTERNAL_SERVER_ERROR, "Session error").into_response();
+    }
+
+    ([(header::CACHE_CONTROL, "no-store")], Json(challenge)).into_response()
 }
 
 #[derive(Debug, Deserialize)]
 struct LoginPostBody {
     credential: String,
-    g_csrf_token: String,
+    state: String,
 }
 
 async fn login_post(
     State(state): State<AppState>,
-    cookies: CookieManager,
     session: Session,
     Form(body): Form<LoginPostBody>,
 ) -> impl IntoResponse {
-    let csrf_cookie = cookies.get("g_csrf_token").map(|c| c.value().to_string());
-    if let Err(e) = state
-        .google_auth_service
-        .verify_csrf(csrf_cookie.as_deref(), &body.g_csrf_token)
-    {
-        tracing::warn!("CSRF verification failed: {}", e);
-        return (StatusCode::BAD_REQUEST, "CSRF verification failed").into_response();
+    // The challenge is single-use, whether or not verification succeeds
+    let challenge = match session.remove::<LoginChallenge>(LOGIN_CHALLENGE_KEY).await {
+        Ok(Some(challenge)) => challenge,
+        Ok(None) => {
+            tracing::warn!("Login attempted without a pending challenge");
+            return (StatusCode::BAD_REQUEST, "Login challenge missing").into_response();
+        }
+        Err(e) => {
+            tracing::error!("Failed to read login challenge: {}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Session error").into_response();
+        }
+    };
+
+    if challenge.state != body.state {
+        tracing::warn!("Login state mismatch");
+        return (StatusCode::BAD_REQUEST, "State mismatch").into_response();
     }
 
     match state
         .google_auth_service
-        .verify_token(&body.credential)
+        .verify_token(&body.credential, &challenge.nonce)
         .await
     {
         Ok(user) => {
@@ -382,7 +411,6 @@ async fn profile(
         hx_request,
         Some("Profile"),
         &state.google_client_id,
-        state.login_url,
         profile_page(
             user.email.as_deref(),
             user.username.as_deref(),
@@ -411,6 +439,18 @@ async fn delete_account(
             .into_response();
     }
 
+    let google_account_id = match get_user_by_id(&state.db_pool, app_session.user_id).await {
+        Ok(user) => user.and_then(|u| u.google_account_id),
+        Err(e) => {
+            tracing::error!("Failed to fetch user {}: {}", app_session.user_id, e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "There was an error while trying to delete your account. Please try again.",
+            )
+                .into_response();
+        }
+    };
+
     if let Err(e) = delete_user(&state.db_pool, app_session.user_id).await {
         tracing::error!("Failed to delete user {}: {}", app_session.user_id, e);
         return (
@@ -426,7 +466,16 @@ async fn delete_account(
         tracing::error!("Failed to delete session after account deletion: {}", e);
     }
 
-    (StatusCode::NO_CONTENT, [("HX-Location", "/")]).into_response()
+    let trigger = format!(
+        r#"{{ "account-deleted": {{ "googleAccountId": "{}" }} }}"#,
+        google_account_id.unwrap_or_default()
+    );
+
+    (
+        StatusCode::NO_CONTENT,
+        [("HX-Trigger", trigger.to_string())],
+    )
+        .into_response()
 }
 
 pub fn index_router() -> Router<AppState> {
@@ -436,6 +485,7 @@ pub fn index_router() -> Router<AppState> {
         .route("/privacy", get(privacy))
         .route("/search", get(search))
         .route("/login", get(login_get).post(login_post))
+        .route("/login/nonce", post(login_nonce))
         .route("/logout", get(logout))
         .route("/profile", get(profile))
         .route("/deleteAccount", post(delete_account))

@@ -14,7 +14,7 @@ fn dropdown(button_class: &str, button_size: &str) -> Markup {
             {
                 li { a href="/profile" { "Profile"; } }
                 div class="divider m-0 px-2" {}
-                li { a href="/logout" { "Logout"; } }
+                li { a href="/logout" hx-boost="false" { "Logout"; } }
             }
         }
     }

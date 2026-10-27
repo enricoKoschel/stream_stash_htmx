@@ -75,7 +75,6 @@ struct AppState {
     db_pool: SqlitePool,
     google_auth_service: GoogleAuthService,
     google_client_id: String,
-    login_url: &'static str,
 }
 
 #[tokio::main]
@@ -128,11 +127,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         db_pool,
         google_auth_service: GoogleAuthService::new(google_client_id.clone()),
         google_client_id,
-        login_url: if cfg!(debug_assertions) {
-            "http://localhost:8000/login"
-        } else {
-            "https://www.stream-stash.com/login"
-        },
     };
 
     let app = Router::new()

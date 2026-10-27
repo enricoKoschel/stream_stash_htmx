@@ -99,13 +99,7 @@ async fn get_media(
 
     let title = Some(media.tmdb_media.sanitized_title());
     let page = state.tmdb_service.map_media_to_page(&media, &history);
-    maybe_document(
-        hx_request,
-        title.as_deref(),
-        &state.google_client_id,
-        state.login_url,
-        page,
-    )
+    maybe_document(hx_request, title.as_deref(), &state.google_client_id, page)
 }
 
 async fn put_media(

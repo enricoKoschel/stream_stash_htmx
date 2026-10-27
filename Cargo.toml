@@ -31,6 +31,7 @@ tower-sessions = "0.14.0"
 tower-sessions-sqlx-store = { version = "0.15.0", features = ["sqlite"] }
 time = { version = "0.3.45", features = ["formatting", "macros", "parsing"] }
 axum-server = { version = "0.8.0", features = ["tls-rustls"] }
+rand = "0.10.3"
 
 [build-dependencies]
 time = { version = "0.3.45", features = ["formatting"] }
