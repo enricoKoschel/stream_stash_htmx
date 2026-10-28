@@ -1,0 +1,39 @@
+[Unit]
+Description=Stream Stash
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=stream-stash
+Group=stream-stash
+ExecStart=/opt/stream-stash/stream_stash_htmx
+EnvironmentFile=/etc/stream-stash/stream-stash.env
+
+# Creates /var/lib/stream-stash owned by the service user and uses it as cwd
+StateDirectory=stream-stash
+WorkingDirectory=/var/lib/stream-stash
+
+Restart=on-failure
+RestartSec=5
+
+# Allow binding port 443 as a non-root user
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

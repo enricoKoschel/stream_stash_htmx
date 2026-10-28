@@ -1,0 +1,92 @@
+name: Build, deploy & run
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  DEPLOY_DIR: /opt/stream-stash
+  SERVICE_NAME: stream-stash
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Download Tailwind and daisyUI
+        run: ./download_tailwind.sh
+
+      # sqlx macros check queries at compile time against DATABASE_URL
+      - name: Create build database
+        run: |
+          for migration in migrations/*.up.sql; do
+            sqlite3 stream_stash.db < "$migration"
+          done
+
+      - name: Build
+        run: cargo build --release --locked
+        env:
+          DATABASE_URL: sqlite:stream_stash.db
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-output
+          path: target/release/stream_stash_htmx
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build output
+        uses: actions/download-artifact@v8
+        with:
+          name: build-output
+
+      # Upload under a temporary name so the running binary is never overwritten
+      - name: Rename build output
+        run: mv stream_stash_htmx stream_stash_htmx.new
+
+      - name: Upload to server
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: stream_stash_htmx.new
+          target: ${{ env.DEPLOY_DIR }}/
+
+      - name: Install build and restart service
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script_stop: true
+          envs: DEPLOY_DIR,SERVICE_NAME
+          script: |
+            chmod 755 "$DEPLOY_DIR/stream_stash_htmx.new"
+            mv "$DEPLOY_DIR/stream_stash_htmx.new" "$DEPLOY_DIR/stream_stash_htmx"
+            sudo systemctl restart "$SERVICE_NAME"
+            sudo systemctl is-active --quiet "$SERVICE_NAME"
