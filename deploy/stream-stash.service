@@ -14,6 +14,8 @@ EnvironmentFile=/etc/stream-stash/stream-stash.env
 StateDirectory=stream-stash
 WorkingDirectory=/var/lib/stream-stash
 
+LogNamespace=stream-stash
+
 Restart=on-failure
 RestartSec=5
 
