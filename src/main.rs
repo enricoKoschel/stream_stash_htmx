@@ -9,6 +9,7 @@ use axum_cookie::CookieLayer;
 use axum_htmx::AutoVaryLayer;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
+use sqlx::sqlite::SqliteConnectOptions;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
 use tokio::{signal, task::AbortHandle};
@@ -107,8 +108,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         info!("Current LOG_LEVEL: {}", log_level);
     }
 
-    // TODO: Imbed migrations in source?
-    let db_pool = SqlitePool::connect(&sqlite_connection_string).await?;
+    let connect_options =
+        SqliteConnectOptions::from_str(&sqlite_connection_string)?.create_if_missing(true);
+    let db_pool = SqlitePool::connect_with(connect_options).await?;
+
+    sqlx::migrate!("./migrations").run(&db_pool).await?;
+    info!("Database migrations applied");
+
     let session_store = SqliteStore::new(db_pool.clone());
 
     let deletion_task = tokio::task::spawn(

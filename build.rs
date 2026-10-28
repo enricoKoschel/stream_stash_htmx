@@ -28,6 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("cargo:rerun-if-changed={TAILWIND_CSS_FILE}");
     println!("cargo:rerun-if-changed=src/");
+    println!("cargo:rerun-if-changed=migrations/");
 
     let output = Command::new(TAILWIND_CSS_CLI)
         .args([
