@@ -373,7 +373,7 @@ async fn login_post(
 }
 
 async fn logout(session: Session) -> impl IntoResponse {
-    if let Err(e) = session.delete().await {
+    if let Err(e) = session.flush().await {
         tracing::error!("Failed to delete session: {}", e);
     }
     Redirect::to("/login")
@@ -462,7 +462,7 @@ async fn delete_account(
 
     // Redundant, because delete_user() deletes all session information from DB,
     // but why not?
-    if let Err(e) = session.delete().await {
+    if let Err(e) = session.flush().await {
         tracing::error!("Failed to delete session after account deletion: {}", e);
     }
 
@@ -486,7 +486,7 @@ pub fn index_router() -> Router<AppState> {
         .route("/search", get(search))
         .route("/login", get(login_get).post(login_post))
         .route("/login/nonce", post(login_nonce))
-        .route("/logout", get(logout))
+        .route("/logout", post(logout))
         .route("/profile", get(profile))
         .route("/deleteAccount", post(delete_account))
 }

@@ -19,7 +19,6 @@ use tower_http::trace::TraceLayer;
 use tower_sessions::cookie::SameSite;
 use tower_sessions::{ExpiredDeletion, Session, SessionManagerLayer};
 use tower_sessions_sqlx_store::SqliteStore;
-use tracing::{info, warn};
 use tracing_subscriber::filter::LevelFilter;
 
 mod data_source;
@@ -106,9 +105,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     tracing_subscriber::fmt().with_max_level(log_level).init();
     if should_warn {
-        warn!("No or invalid LOG_LEVEL environment variable found, using default value of INFO");
+        tracing::warn!(
+            "No or invalid LOG_LEVEL environment variable found, using default value of INFO"
+        );
     } else {
-        info!("Current LOG_LEVEL: {}", log_level);
+        tracing::info!("Current LOG_LEVEL: {}", log_level);
     }
 
     let connect_options =
@@ -116,7 +117,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db_pool = SqlitePool::connect_with(connect_options).await?;
 
     sqlx::migrate!("./migrations").run(&db_pool).await?;
-    info!("Database migrations applied");
+    tracing::info!("Database migrations applied");
 
     let session_store = SqliteStore::new(db_pool.clone());
 

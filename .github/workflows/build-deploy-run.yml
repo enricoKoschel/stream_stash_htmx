@@ -83,9 +83,9 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          script_stop: true
           envs: DEPLOY_DIR,SERVICE_NAME
           script: |
+            set -e
             chmod 755 "$DEPLOY_DIR/stream_stash_htmx.new"
             mv "$DEPLOY_DIR/stream_stash_htmx.new" "$DEPLOY_DIR/stream_stash_htmx"
             sudo systemctl restart "$SERVICE_NAME"
