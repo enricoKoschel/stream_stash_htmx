@@ -32,12 +32,13 @@ Click [here](https://developer.themoviedb.org/docs/getting-started) for instruct
 
 - Create a `.env` file in the same directory as the `Cargo.toml` file with the following contents:
 
-TODO: Add ip, port, log level
-
 ```toml
-TMDB_READ_ACCESS_TOKEN="" # Your TMDB API Read Access Token
-DATABASE_URL="" # URL to the Stream Stash DB (e.g.: "sqlite:stream_stash.db")
-GOOGLE_CLIENT_ID="" # Your Google OAuth Client ID (ends with .apps.googleusercontent.com)
+TMDB_READ_ACCESS_TOKEN="..." # Your TMDB API Read Access Token
+GOOGLE_CLIENT_ID="..." # Your Google OAuth Client ID (ends with .apps.googleusercontent.com)
+TLS_CERT_PATH="..." # Only needed when running in release mode
+TLS_KEY_PATH="..." # Only needed when running in release mode
+DATABASE_URL="sqlite:stream-stash.db" # URL to the Stream Stash DB
+LOG_LEVEL="INFO"
 ```
 
 - Make sure to use the TMDB API Read Access Token, not the API Key (both can be found [here](https://www.themoviedb.org/settings/api) after your request to access the TMDB API has been granted)

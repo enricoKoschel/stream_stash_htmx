@@ -103,7 +103,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(_) => (LevelFilter::INFO, true),
         }
     };
-    tracing_subscriber::fmt().with_max_level(log_level).init();
+    tracing_subscriber::fmt()
+        .with_max_level(log_level)
+        .with_ansi(false)
+        .init();
     if should_warn {
         tracing::warn!(
             "No or invalid LOG_LEVEL environment variable found, using default value of INFO"
