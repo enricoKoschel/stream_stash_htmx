@@ -67,7 +67,7 @@ where
             None => None,
         };
 
-        Ok(MaybeAppSession(app_session))
+         Ok(MaybeAppSession(app_session))
     }
 }
 
