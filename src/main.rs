@@ -81,9 +81,11 @@ struct AppState {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // TODO: Probably don't error? No .env file when deployed on server?
-    if let Err(e) = dotenvy::dotenv() {
-        panic!("Error while loading .env file: {e}")
+    #[cfg(debug_assertions)]
+    {
+        if let Err(e) = dotenvy::dotenv() {
+            panic!("Error while loading .env file: {e}")
+        }
     }
 
     let tmdb_read_access_token = std::env::var("TMDB_READ_ACCESS_TOKEN")
