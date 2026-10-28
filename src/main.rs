@@ -1,6 +1,7 @@
 use crate::data_source::google_auth::GoogleAuthService;
 use crate::data_source::tmdb::TmdbService;
 use crate::routes::{index_router, media_router};
+use crate::static_files::static_router;
 use axum::Router;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
@@ -14,7 +15,6 @@ use std::net::Ipv4Addr;
 use std::str::FromStr;
 use tokio::{signal, task::AbortHandle};
 use tower_http::compression::CompressionLayer;
-use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 use tower_sessions::cookie::SameSite;
 use tower_sessions::{ExpiredDeletion, Session, SessionManagerLayer};
@@ -24,6 +24,7 @@ use tracing_subscriber::filter::LevelFilter;
 
 mod data_source;
 mod routes;
+mod static_files;
 mod views;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -137,8 +138,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app = Router::new()
         .merge(index_router())
-        .route_service("/favicon.ico", ServeFile::new("./static/favicon.ico"))
-        .nest_service("/static", ServeDir::new("./static"))
+        .merge(static_router())
         .nest("/media", media_router())
         .layer(TraceLayer::new_for_http())
         .layer(AutoVaryLayer)
