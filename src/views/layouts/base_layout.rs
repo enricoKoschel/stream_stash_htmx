@@ -152,6 +152,23 @@ pub fn base_layout(title: Option<&str>, google_client_id: &str, children: Markup
 
                 (page_title(title));
 
+                script {
+                    (PreEscaped(r#"
+                        document.addEventListener("click", (event) => {
+                            if (event.target instanceof Element
+                                && event.target.closest("details.dropdown"))
+                            {
+                                return;
+                            }
+                            document
+                                .querySelectorAll("details.dropdown[open]")
+                                .forEach((dropdown) => {
+                                    dropdown.removeAttribute("open");
+                                });
+                        });
+                    "#));
+                }
+
                 // Has to be at the bottom and without async or defer
                 // Otherwise a red background appears while loading
                 script { (PreEscaped(GOOGLE_SIGN_IN_JS)) }
