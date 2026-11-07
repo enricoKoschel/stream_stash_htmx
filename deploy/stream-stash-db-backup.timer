@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Stream Stash database backup hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=5m
+Unit=stream-stash-db-backup.service
+
+[Install]
+WantedBy=timers.target
