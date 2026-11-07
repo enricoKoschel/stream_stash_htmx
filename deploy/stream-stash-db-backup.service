@@ -1,0 +1,23 @@
+[Unit]
+Description=Back up the Stream Stash SQLite database to Google Drive
+Wants=network-online.target
+After=network-online.target stream-stash.service
+
+[Service]
+Type=oneshot
+LogNamespace=stream-stash
+SyslogIdentifier=stream-stash-db-backup
+User=stream-stash
+Group=stream-stash
+StateDirectory=stream-stash
+WorkingDirectory=/var/lib/stream-stash
+EnvironmentFile=/etc/stream-stash/backup.env
+Environment=RCLONE_CONFIG=/etc/stream-stash/rclone.conf
+ExecStart=/usr/bin/bash /opt/stream-stash/backup-stream-stash-db.sh
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ReadWritePaths=/var/lib/stream-stash
