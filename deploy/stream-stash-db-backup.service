@@ -21,3 +21,4 @@ ProtectHome=true
 PrivateTmp=true
 PrivateDevices=true
 ReadWritePaths=/var/lib/stream-stash
+ReadWritePaths=/etc/stream-stash
